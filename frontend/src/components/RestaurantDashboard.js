@@ -1,46 +1,51 @@
-import { useState, useEffect } from "react";
-import { supabase } from "./supabaseClient";
+//NOTES: RestaurantDashboard.js talks to Supabase directly, doesn't go through fastAPI backend
 
-export default function RestaurantDashboard({ user }) {
-  const [form, setForm] = useState({
-    information: "",
+import { useState, useEffect } from "react"; //useEffect: runs side-effects (e.g., fetching data after component mounts), useState: allows you to create reactive variables (items, loading, etc.)
+import { supabase } from "./supabaseClient"; //initialize Supabase client, used to get the user session and token
+
+export default function RestaurantDashboard({ user }) { //main react component
+  //state setup
+  const [form, setForm] = useState({ //form state holds the data for a new food offer being created by the restauran
+    information: "", //initialized with empty values
     pickup_time: "",
     total_spots: 1,
     price: 0,
   });
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [items, setItems] = useState([]); //food items made by restaurant(pulled from the backend)
+  const [loading, setLoading] = useState(false); //manages loading state for API calls
+  const [error, setError] = useState(null); //stores error messages if any occur
 
   // Fetch items for this restaurant with RLS enforced
   const fetchItems = async () => {
-    if (!user?.id) {
+    if (!user?.id) { //If no user is logged in, don’t try to fetch
       setItems([]);
       return;
     }
-    setLoading(true);
+
+    setLoading(true); //begin loading state
     setError(null);
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase //Supabase query: fetches all rows from the items table, Filters them where restaurant_id matches the current user ID
         .from("items")
         .select("*")
-        .eq("restaurant_id", user.id);
-
+        .eq("restaurant_id", user.id); //Filters them where restaurant_id matches the current user ID (also enforced by Supabase's RLS)
+      
+    //Handles success or error
       if (error) throw error;
       setItems(data || []);
     } catch (err) {
       setError(err.message || "Failed to fetch items");
     } finally {
-      setLoading(false);
+      setLoading(false); //ends loading state
     }
   };
 
-  useEffect(() => {
+  useEffect(() => { //Calls fetchItems() once on mount or when user.id changes.
     fetchItems();
   }, [user?.id]);
 
-  const handleChange = (e) => {
+  const handleChange = (e) => { //Updates the corresponding form field when input changes.
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
@@ -49,25 +54,26 @@ export default function RestaurantDashboard({ user }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault(); //Prevents default form submission
+
+    setLoading(true); //Begins loading state
     setError(null);
 
     try {
-      const { data, error } = await supabase.from("items").insert([
+      const { data, error } = await supabase.from("items").insert([ //request to Supabase: Submits a new item to the items table using the form values
         {
-          restaurant_id: user.id,
+          restaurant_id: user.id, //restaurant_id links the item to the current user.
           information: form.information,
           pickup_time: form.pickup_time,
-          total_spots: parseInt(form.total_spots, 10),
+          total_spots: parseInt(form.total_spots, 10), //Converts total_spots and price to numeric types
           price: parseFloat(form.price),
         },
       ]);
 
       if (error) throw error;
 
-      alert("Offer created!");
-      setForm({
+      alert("Offer created!"); //show success alert
+      setForm({ //reset form after success
         information: "",
         pickup_time: "",
         total_spots: 1,
@@ -77,10 +83,12 @@ export default function RestaurantDashboard({ user }) {
     } catch (err) {
       alert("Failed to create offer: " + (err.message || err));
     } finally {
-      setLoading(false);
+      setLoading(false); //end loading state
     }
   };
 
+
+  // UI / HTML Portion
   return (
     <div>
       <h2>Restaurant Dashboard</h2>

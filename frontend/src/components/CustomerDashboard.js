@@ -1,20 +1,25 @@
-import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
-import { fetchItems, fetchReservations, createReservation } from "../api";
+//NOTES: CustomerDashboard.js goes through fastAPI backend, doesn't talk directly to Supabase
 
-export default function CustomerDashboard({ user }) {
-  const [items, setItems] = useState([]);
-  const [reservations, setReservations] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  // Load available items
+import { useEffect, useState } from "react"; //useEffect: runs side-effects (e.g., fetching data after component mounts), useState: allows you to create reactive variables (items, loading, etc.)
+import { supabase } from "./supabaseClient"; //initialize Supabase client, used to get the user session and token
+import { fetchItems, fetchReservations, createReservation } from "../api"; //helper functions that make HTTP requests to FastAPI backend
+
+export default function CustomerDashboard({ user }) { //main react component
+  //state setup
+  const [items, setItems] = useState([]); //food items pulled from the backend
+  const [reservations, setReservations] = useState([]); //current user’s reservations
+  const [loading, setLoading] = useState(false); //loading tracks if app is currently fetching data
+  const [error, setError] = useState(""); //error messaging if error encountered during processes
+
+  // Load available items from backend
   const loadItems = async () => {
     try {
-      const data = await fetchItems(supabase);
-      setItems(data);
+      const data = await fetchItems(supabase); //HTTP request to your backend (using Supabase for token)
+      setItems(data); //data is set to items state
       setError("");
     } catch (err) {
+      //handle errors
       console.error(err);
       setError(err.message || "Failed to load items.");
     }
@@ -23,30 +28,31 @@ export default function CustomerDashboard({ user }) {
   // Load user reservations
   const loadReservations = async () => {
     try {
-      if (!user?.id) {
+      if (!user?.id) { //If no user is logged in, don’t try to fetch reservations
         setReservations([]);
         return;
       }
-      const data = await fetchReservations(supabase);
+      const data = await fetchReservations(supabase); //HTTP request to your backend (using Supabase for token)
       setReservations(data);
       setError("");
     } catch (err) {
+      //handle errors
       console.error(err);
       setError(err.message || "Failed to load your reservations.");
     }
   };
 
   useEffect(() => {
-    loadItems();
-  }, []);
+    loadItems(); 
+  }, []); //Run loadItems() when the component first mounts (empty [] dependency)
 
   useEffect(() => {
     loadReservations();
-  }, [user?.id]);
+  }, [user?.id]); //Re-fetch reservations when the user logs in or changes
 
   // Make a reservation
-  const reserve = async (item_id) => {
-    if (!user?.id) {
+  const reserve = async (item_id) => { // Called when the user clicks the Reserve button for a food item
+    if (!user?.id) { //check to prevent unauthorized access
       alert("You are not logged in.");
       return;
     }
@@ -55,6 +61,8 @@ export default function CustomerDashboard({ user }) {
     setError("");
 
     try {
+
+      //Build a payload object to send to backend
       const payload = {
         customer_id: user.id,
         item_id,
@@ -62,12 +70,16 @@ export default function CustomerDashboard({ user }) {
         status: "active",
       };
 
-      await createReservation(supabase, payload);
+      //createReservation() sends a POST to your FastAPI backend with a bearer token
+      await createReservation(supabase, payload); 
 
-      alert("✅ Reservation created!");
+      alert("Reservation created!"); //success popup
 
-      await loadReservations();
+      //Re-fetch reservations and item counts to reflect the new state (update whats shown on dashboard)
+      await loadReservations(); 
       await loadItems();
+
+    // handle errors
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to create reservation.");
@@ -75,7 +87,7 @@ export default function CustomerDashboard({ user }) {
       setLoading(false);
     }
   };
-
+// UI/HTML Portion
   return (
     <div>
       <h2>Customer Dashboard</h2>
@@ -83,7 +95,7 @@ export default function CustomerDashboard({ user }) {
       {loading && <p>Processing reservation…</p>}
 
       <h3>Available Food Offers</h3>
-      {items.filter((item) => (item.total_spots - (item.num_of_reservations || 0)) > 0).length === 0 ? (
+      {items.filter((item) => (item.total_spots - (item.num_of_reservations || 0)) > 0).length === 0 ? ( //Filters out items with full reservations
         <p>No available food offers at the moment.</p>
       ) : (
         <ul>
@@ -104,7 +116,7 @@ export default function CustomerDashboard({ user }) {
         </ul>
       )}
 
-      <h3>Your Reservations</h3>
+      <h3>Your Reservations</h3> 
       {reservations.length === 0 ? (
         <p>You have no reservations yet.</p>
       ) : (

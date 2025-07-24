@@ -1,17 +1,20 @@
-import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
+//NOTES: ItemList.js talks to Supabase directly, doesn't go through fastAPI backend
+//This page will probably be removed to suit homepage needs
 
-export default function ItemsList() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+import { useEffect, useState } from "react"; //useEffect: runs side-effects (e.g., fetching data after component mounts), useState: allows you to create reactive variables (items, loading, etc.)
+import { supabase } from "./supabaseClient"; //initialize Supabase client, used to get the user session and token
 
-  const fetchItems = async () => {
-    setLoading(true);
+export default function ItemsList() { //reusable React component called ItemsList which fetches and displays a list of available food offers.
+  const [items, setItems] = useState([]); //items stores the array of food offers fetched from Supabase, setItems is the setter function to update that state.
+  const [loading, setLoading] = useState(true); //loading tracks if app is currently fetching data
+  const [error, setError] = useState(null); //error messaging if error encountered during processes
+
+  const fetchItems = async () => { //data retrieval from the items table in Supabase.
+    setLoading(true); //begin loading
     setError(null);
 
     try {
-      const { data, error, status, statusText } = await supabase
+      const { data, error, status, statusText } = await supabase //queries all rows (select("*")) from the "items" table, returns a result object with keys: data (fetched items), error, status, and statusText
         .from("items")
         .select("*");
 
@@ -20,22 +23,26 @@ export default function ItemsList() {
         console.error("Supabase error:", error);
         setError(error.message || "Failed to fetch food offers");
         setItems([]);
-      } else {
+      } 
+      else { //if no error, items state is set to the data returned
         setItems(data || []);
       }
+    //handle errors
     } catch (err) {
       console.error("Unexpected error:", err);
       setError(err.message || "Failed to fetch food offers");
       setItems([]);
     } finally {
-      setLoading(false);
+      setLoading(false); //data is fetched, therefore loading is done
     }
   };
 
-  useEffect(() => {
+  useEffect(() => { //runs fetchItems() once, when the component mounts
     fetchItems();
   }, []);
 
+
+// UI component
   if (loading) return <p>Loading food offers…</p>;
   if (error) return <p style={{ color: "red" }}>Error: {error}</p>;
 
@@ -44,6 +51,7 @@ export default function ItemsList() {
     (item) => (item.total_spots - (item.num_of_reservations || 0)) > 0
   );
 
+  //HTML component
   return (
     <div>
       <h2>Available Food Offers</h2>

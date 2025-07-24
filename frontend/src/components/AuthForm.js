@@ -1,3 +1,8 @@
+//NOTES: AuthForm.js only talks to Supabase directly:
+// supabase.auth.signInWithPassword() and signUp() for authentication
+// Inserts profile into Supabase profiles table directly
+// No calls to the FastAPI backend (on Render)
+
 import React, { useState } from "react";
 
 export default function AuthForm({ onAuth, supabase }) {
@@ -21,17 +26,18 @@ export default function AuthForm({ onAuth, supabase }) {
     setErrorMsg("");
   };
 
+  //Authentication: Login Flow
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email, password }); //calls Supabase Auth directly to log in the user using email/password
       if (error) {
         setErrorMsg(error.message);
       } else {
-        onAuth(); // will refresh session + profile in App
+        onAuth(); // Notifies parent (App.js) to refresh session + fetch profile
         resetForm();
       }
     } catch (err) {
@@ -42,13 +48,15 @@ export default function AuthForm({ onAuth, supabase }) {
     }
   };
 
+
+  //Authentication: Signup Flow
   const handleSignup = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
 
     try {
-      // Create user in Supabase Auth
+      // Creates an auth user via Supabase Auth
       const { data: signupData, error: signupError } = await supabase.auth.signUp({
         email,
         password,
@@ -62,7 +70,7 @@ export default function AuthForm({ onAuth, supabase }) {
 
       const user = signupData?.user;
       if (user) {
-        // Insert user profile in "profiles" table
+        //Directly inserts extra data (role, name, contact) into your Supabase profiles table
         const { error: profileError } = await supabase.from("profiles").insert([
           {
             user_id: user.id,
@@ -82,7 +90,7 @@ export default function AuthForm({ onAuth, supabase }) {
 
         // Show success message, keep the form on signup so user can see it
         setErrorMsg("Signup successful! Please check your email to confirm your account before logging in.");
-        // DO NOT switch to login or reset form here
+        // Does not switch to login or reset form
       }
     } catch (err) {
       setErrorMsg("Unexpected error during signup.");
@@ -92,6 +100,7 @@ export default function AuthForm({ onAuth, supabase }) {
     }
   };
 
+  //HTML Portion
   return (
     <div style={{ maxWidth: 400, margin: "2rem auto" }}>
       <h2>{isLogin ? "Login" : "Sign Up"}</h2>

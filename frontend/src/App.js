@@ -1,20 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js"; // Supabase client
 
-import ItemsList from "./components/ItemsList";
-import RestaurantDashboard from "./components/RestaurantDashboard";
-import CustomerDashboard from "./components/CustomerDashboard";
-import AuthForm from "./components/AuthForm";
+import ItemsList from "./components/ItemsList"; // Shows public food items (to be removed)
+import RestaurantDashboard from "./components/RestaurantDashboard"; // Dashboard for restaurant users
+import CustomerDashboard from "./components/CustomerDashboard"; // Dashboard for customers
+import AuthForm from "./components/AuthForm"; // Handles login/signup
 
-const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY;
+// grab Supabase Url and Supabase Public Anon Key from .env.local
+const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;  //points to unique Supabase project endpoint
+const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY; //allows the frontend to securely interact with the database within the limits of Row-Level Security (RLS)
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // Initialize Supabase client
 
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [items, setItems] = useState([]);
+  const [user, setUser] = useState(null);       // Supabase authenticated user
+  const [profile, setProfile] = useState(null); // User profile from `profiles` table
+  const [items, setItems] = useState([]);       // Public food items list
   const [loadingItems, setLoadingItems] = useState(true);
   const [errorItems, setErrorItems] = useState(null);
 
@@ -23,19 +24,20 @@ export default function App() {
     async function fetchSession() {
       const {
         data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+      } = await supabase.auth.getSession();  // Get current auth session
+      setUser(session?.user ?? null);        // Set user if exists
     }
 
     fetchSession();
 
+    // Set up real-time listener for login/logout events
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setProfile(null); // Reset profile to reload on user change
+      setUser(session?.user ?? null);  // Update user on login/logout
+      setProfile(null);                // Reset profile (refetch)
     });
 
     return () => {
-      listener.subscription.unsubscribe();
+      listener.subscription.unsubscribe(); // Clean up listener
     };
   }, []);
 
@@ -47,6 +49,7 @@ export default function App() {
         return;
       }
 
+      // Get role, name, location, etc. from Supabase profiles table 
       const { data, error } = await supabase
         .from("profiles")
         .select("role, name, location, contact")
@@ -57,7 +60,7 @@ export default function App() {
         console.error("Error fetching profile", error);
         setProfile(null);
       } else {
-        setProfile(data);
+        setProfile(data); // Set profile on success
       }
     }
 
@@ -70,7 +73,7 @@ export default function App() {
       setLoadingItems(true);
       setErrorItems(null);
 
-      const { data, error } = await supabase.from("items").select("*");
+      const { data, error } = await supabase.from("items").select("*"); // Publicly visible food items
       if (error) {
         setErrorItems(error.message);
         setItems([]);
@@ -81,15 +84,16 @@ export default function App() {
     }
 
     fetchItems();
-  }, [user]);
+  }, [user]); // Refetch items if user changes
 
+  //Log out logic
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
   };
 
-  // Render logic:
+  // Conditional Render logic:
 
   // Not logged in: show AuthForm and public ItemsList with fetched items
   if (!user) {
@@ -123,7 +127,7 @@ export default function App() {
     );
   }
 
-  // Logged in and profile loaded
+  // Logged in and profile loaded (show role specific dashboard)
   return (
     <div style={{ maxWidth: 600, margin: "2rem auto" }}>
       <h2>
@@ -136,3 +140,7 @@ export default function App() {
     </div>
   );
 }
+
+//NOTES: Auth is handled fully by Supabase
+//This file renders CustomerDashboard and RestaurantDashboard
+//Backend is actually not called at all in this file (that happens in components)
