@@ -130,7 +130,7 @@ def create_reservation(reservation: Reservation, authorization: str = Header(...
 
     try:
         with httpx.Client() as client:
-            # Step 1: Create reservation
+            #Create reservation
             response = client.post(
                 f"{SUPABASE_URL}/rest/v1/reservations",
                 headers=headers,
@@ -139,7 +139,7 @@ def create_reservation(reservation: Reservation, authorization: str = Header(...
             if response.status_code >= 400:
                 raise HTTPException(status_code=response.status_code, detail=response.text)
 
-            # Step 2: Call RPC to increment item reservation count
+            #Call RPC (a supabase function) to increment item reservation count
             rpc_response = client.post(
                 f"{SUPABASE_URL}/rest/v1/rpc/increment_num_of_reservations",
                 headers=headers,
