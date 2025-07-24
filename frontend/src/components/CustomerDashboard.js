@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { supabase } from "./supabaseClient"; // adjust path as needed
+import { supabase } from "./supabaseClient";
+import { API_BASE_URL } from "./api";
 
 export default function CustomerDashboard({ user }) {
   const [items, setItems] = useState([]);
@@ -26,7 +27,7 @@ export default function CustomerDashboard({ user }) {
       const token = await getJwt();
       if (!token) throw new Error("User not authenticated");
 
-      const res = await axios.get("http://127.0.0.1:8000/items", {
+      const res = await axios.get(`${API_BASE_URL}items`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setItems(res.data);
@@ -45,7 +46,7 @@ export default function CustomerDashboard({ user }) {
         return;
       }
 
-      const res = await axios.get("http://127.0.0.1:8000/reservations", {
+      const res = await axios.get(`${API_BASE_URL}reservations`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setReservations(res.data);
@@ -88,7 +89,7 @@ export default function CustomerDashboard({ user }) {
         status: "active",
       };
 
-      await axios.post("http://127.0.0.1:8000/reservations", payload, {
+      await axios.post(`${API_BASE_URL}/reservations`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

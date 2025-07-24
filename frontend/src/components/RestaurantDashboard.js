@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "./supabaseClient"; // adjust path if needed
+import { supabase } from "./supabaseClient";
 
 export default function RestaurantDashboard({ user }) {
   const [form, setForm] = useState({

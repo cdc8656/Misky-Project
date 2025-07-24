@@ -20,7 +20,9 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # update as needed for deployment
+    allow_origins=[
+        "http://localhost:3000",
+        "https://misky-project.onrender.com/"],  # update as needed for deployment
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
