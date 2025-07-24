@@ -22,7 +22,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://misky-project.onrender.com/"],  # update as needed for deployment
+        "https://misky-project.onrender.com",
+        "https://misky-project.vercel.app"],  # update as needed for deployment
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
