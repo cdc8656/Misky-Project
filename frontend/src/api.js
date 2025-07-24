@@ -2,7 +2,8 @@
 
 import axios from "axios";
 
-const API_BASE_URL = "https://misky-project.onrender.com";
+export const API_BASE_URL = "https://misky-project.onrender.com";
+
 
 export const getAccessToken = async (supabase) => {
   const {
