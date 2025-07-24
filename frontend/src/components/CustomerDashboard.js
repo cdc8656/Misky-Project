@@ -27,7 +27,7 @@ export default function CustomerDashboard({ user }) {
       const token = await getJwt();
       if (!token) throw new Error("User not authenticated");
 
-      const res = await axios.get(`${API_BASE_URL}items`, {
+      const res = await axios.get(`${API_BASE_URL}/items`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setItems(res.data);
@@ -46,7 +46,7 @@ export default function CustomerDashboard({ user }) {
         return;
       }
 
-      const res = await axios.get(`${API_BASE_URL}reservations`, {
+      const res = await axios.get(`${API_BASE_URL}/reservations`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setReservations(res.data);
