@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { supabase } from "./supabaseClient";
-import { API_BASE_URL } from "./api";
+import { API_BASE_URL } from "../api";
 
 export default function CustomerDashboard({ user }) {
   const [items, setItems] = useState([]);
