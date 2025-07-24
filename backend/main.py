@@ -23,7 +23,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "https://misky-project.onrender.com",
-        "https://misky-project.vercel.app"],  # update as needed for deployment
+        "https://misky-project-1cj4.vercel.app"],  # update as needed for deployment
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
