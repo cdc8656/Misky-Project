@@ -1,12 +1,10 @@
-//NOTES: AuthForm.js only talks to Supabase directly:
-// supabase.auth.signInWithPassword() and signUp() for authentication
-// Inserts profile into Supabase profiles table directly
-// No calls to the FastAPI backend (on Render)
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-import React, { useState } from "react";
+export default function AuthForm({ type = "login", onAuth, supabase }) {
+  const navigate = useNavigate();
 
-export default function AuthForm({ onAuth, supabase }) {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(type === "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -16,6 +14,12 @@ export default function AuthForm({ onAuth, supabase }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  useEffect(() => {
+    setIsLogin(type === "login");
+    setErrorMsg("");
+    resetForm();
+  }, [type]);
+
   const resetForm = () => {
     setEmail("");
     setPassword("");
@@ -23,21 +27,19 @@ export default function AuthForm({ onAuth, supabase }) {
     setRole("customer");
     setLocation("");
     setContact("");
-    setErrorMsg("");
   };
 
-  //Authentication: Login Flow
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password }); //calls Supabase Auth directly to log in the user using email/password
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setErrorMsg(error.message);
       } else {
-        onAuth(); // Notifies parent (App.js) to refresh session + fetch profile
+        onAuth();
         resetForm();
       }
     } catch (err) {
@@ -48,15 +50,12 @@ export default function AuthForm({ onAuth, supabase }) {
     }
   };
 
-
-  //Authentication: Signup Flow
   const handleSignup = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
 
     try {
-      // Creates an auth user via Supabase Auth
       const { data: signupData, error: signupError } = await supabase.auth.signUp({
         email,
         password,
@@ -70,7 +69,6 @@ export default function AuthForm({ onAuth, supabase }) {
 
       const user = signupData?.user;
       if (user) {
-        //Directly inserts extra data (role, name, contact) into your Supabase profiles table
         const { error: profileError } = await supabase.from("profiles").insert([
           {
             user_id: user.id,
@@ -88,9 +86,8 @@ export default function AuthForm({ onAuth, supabase }) {
           return;
         }
 
-        // Show success message, keep the form on signup so user can see it
         setErrorMsg("Signup successful! Please check your email to confirm your account before logging in.");
-        // Does not switch to login or reset form
+        // Do not reset or switch to login automatically to let user see message
       }
     } catch (err) {
       setErrorMsg("Unexpected error during signup.");
@@ -100,7 +97,6 @@ export default function AuthForm({ onAuth, supabase }) {
     }
   };
 
-  //HTML Portion
   return (
     <div style={{ maxWidth: 400, margin: "2rem auto" }}>
       <h2>{isLogin ? "Login" : "Sign Up"}</h2>
@@ -201,36 +197,13 @@ export default function AuthForm({ onAuth, supabase }) {
         </p>
       )}
 
-      <p style={{ marginTop: 10 }}>
-        {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-        <button
-          type="button"
-          onClick={() => {
-            setIsLogin(!isLogin);
-            setErrorMsg("");
-            resetForm();
-          }}
-          disabled={loading}
-        >
-          {isLogin ? "Sign Up" : "Login"}
-        </button>
-      </p>
-
-      {/* Show this button only after successful signup message */}
-      {!isLogin && errorMsg.startsWith("Signup successful") && (
-        <button
-          type="button"
-          onClick={() => {
-            setIsLogin(true);
-            setErrorMsg("");
-            resetForm();
-          }}
-          disabled={loading}
-          style={{ marginTop: "1rem" }}
-        >
-          Back to Login
-        </button>
-      )}
+      <button
+        onClick={() => navigate("/")}
+        disabled={loading}
+        style={{ marginTop: "1rem" }}
+      >
+        Back to Homepage
+      </button>
     </div>
   );
 }
