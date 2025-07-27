@@ -2,6 +2,7 @@
 // supabase.auth.signInWithPassword() and signUp() for authentication
 // Inserts profile into Supabase profiles table directly
 // No calls to the FastAPI backend (on Render)
+//TESTING FOR HOMEPAGE INTERGRATION
 
 import React, { useState } from "react";
 
