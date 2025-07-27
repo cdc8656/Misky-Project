@@ -7,6 +7,8 @@ from datetime import datetime
 import os
 import httpx # (SUPABASE) HTTP client to send requests to Supabase REST API
 from dotenv import load_dotenv # To load Supabase keys from .env file
+import jwt  # pyjwt to decode JWTs
+
 
 
 load_dotenv() # Load environment variables from the .env locally or from Render's env vars
@@ -36,6 +38,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def get_user_id_from_jwt(jwt_token: str) -> str:
+    try:
+        payload = jwt.decode(jwt_token, options={"verify_signature": False})  # decode w/o validation
+        return payload.get("sub")  # user ID is in 'sub' claim
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token format")
 
 #Authorization Headers for Supabase
 def get_auth_headers(jwt: str):
@@ -192,5 +200,62 @@ def create_reservation(
 
             return response.json()# Return reservation data to frontend
     #Handle Errors
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Fetch items created by current restaurant
+@app.get("/restaurant/items")
+def get_restaurant_items(
+    authorization: str = Header(...)
+):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    user_id = get_user_id_from_jwt(jwt_token)
+    headers = get_auth_headers(jwt_token)
+
+    try:
+        with httpx.Client() as client:
+            params = {
+                "select": "*",
+                "restaurant_id": f"eq.{user_id}"  # Filter to only this restaurant's items
+            }
+
+            response = client.get(
+                f"{SUPABASE_URL}/rest/v1/items",
+                headers=headers,
+                params=params,
+            )
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Create item with restaurant_id linked to current user
+@app.post("/restaurant/items")
+def create_restaurant_item(
+    item: Item,
+    authorization: str = Header(...)
+):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    user_id = get_user_id_from_jwt(jwt_token)
+    headers = get_auth_headers(jwt_token)
+
+    payload = item.dict()
+    payload["restaurant_id"] = user_id  # Inject restaurant_id from JWT
+
+    try:
+        with httpx.Client() as client:
+            response = client.post(
+                f"{SUPABASE_URL}/rest/v1/items",
+                headers=headers,
+                json=payload,
+            )
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

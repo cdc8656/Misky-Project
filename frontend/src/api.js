@@ -1,6 +1,8 @@
 import axios from "axios"; //alows for HTTP requests to be made to FastAPI backend.
 
-export const API_BASE_URL = "https://misky-project.onrender.com"; //base URL of FastAPI backend
+export const API_BASE_URL = "https://misky-project.onrender.com";
+//"http://localhost:8000"; //Local testing
+//"https://misky-project.onrender.com"; //base URL of FastAPI backend
 
 export const getAccessToken = async (supabase) => { //supabase.auth.getSession() to fetch the current user's session, which includes the access token if logged in
   const {
@@ -16,6 +18,8 @@ export const getAccessToken = async (supabase) => { //supabase.auth.getSession()
   return session?.access_token || null; // returns the access token, which is needed to authenticate API requests to your backend
 };
 
+
+//CUSTOMER FUNCTIONS
 // Fetch all available food items (for customers)
 export const fetchItems = async (supabase) => {
   //Gets the access token. If the user is not logged in, throws an error
@@ -70,5 +74,44 @@ export const fetchReservations = async (supabase) => {
   catch (err) {
     console.error("Error fetching reservations:", err);
     throw new Error(err.response?.data?.detail || "Failed to fetch reservations");
+  }
+};
+
+
+
+//RESTAURANT FUNCTIONS
+
+// Fetch items created by the logged-in restaurant
+export const fetchRestaurantItems = async (supabase) => {
+  const token = await getAccessToken(supabase);
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    const res = await axios.get(`${API_BASE_URL}/restaurant/items`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Error fetching restaurant items:", err);
+    throw new Error(err.response?.data?.detail || "Failed to fetch restaurant items");
+  }
+};
+
+// Create a new food offer by the restaurant
+export const createRestaurantItem = async (supabase, itemData) => {
+  const token = await getAccessToken(supabase);
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    const res = await axios.post(`${API_BASE_URL}/restaurant/items`, itemData, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Error creating restaurant item:", err);
+    throw new Error(err.response?.data?.detail || "Failed to create item");
   }
 };
