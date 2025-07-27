@@ -11,6 +11,7 @@ export default function CustomerDashboard({ user }) { //main react component
   const [reservations, setReservations] = useState([]); //current user’s reservations
   const [loading, setLoading] = useState(false); //loading tracks if app is currently fetching data
   const [error, setError] = useState(""); //error messaging if error encountered during processes
+  const [searchTerm, setSearchTerm] = useState(""); //search terms
 
   // Load available items from backend
   const loadItems = async () => {
@@ -87,6 +88,16 @@ export default function CustomerDashboard({ user }) { //main react component
       setLoading(false);
     }
   };
+
+  //Filter items based on search input
+  const filteredItems = items
+    .filter(item => (item.total_spots - (item.num_of_reservations || 0)) > 0)
+    .filter(item =>
+      item.information.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.location.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+
 // UI/HTML Portion
   return (
     <div>
@@ -94,27 +105,35 @@ export default function CustomerDashboard({ user }) { //main react component
       {error && <p style={{ color: "red" }}>{error}</p>}
       {loading && <p>Processing reservation…</p>}
 
+      {/*Search input*/}
+      <input
+        type="text"
+        placeholder="Search food or restaurant location..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        style={{ marginBottom: "1rem", padding: "0.5rem", width: "100%" }}
+      />
+
       <h3>Available Food Offers</h3>
-      {items.filter((item) => (item.total_spots - (item.num_of_reservations || 0)) > 0).length === 0 ? ( //Filters out items with full reservations
-        <p>No available food offers at the moment.</p>
+      {filteredItems.length === 0 ? (
+        <p>No matching food offers at the moment.</p>
       ) : (
         <ul>
-          {items
-            .filter((item) => (item.total_spots - (item.num_of_reservations || 0)) > 0)
-            .map((item) => (
-              <li key={item.id} style={{ marginBottom: "0.5rem" }}>
-                <strong>{item.information}</strong> —{" "}
-                {new Date(item.pickup_time).toLocaleString()} — $
-                {item.price.toFixed(2)} — spots:{" "}
-                {item.total_spots - (item.num_of_reservations || 0)} <br />
-                Location: {item.location} <br />
-                <button disabled={loading} onClick={() => reserve(item.id)}>
-                  Reserve
-                </button>
-              </li>
-            ))}
+          {filteredItems.map((item) => (
+            <li key={item.id} style={{ marginBottom: "0.5rem" }}>
+              <strong>{item.information}</strong> —{" "}
+              {new Date(item.pickup_time).toLocaleString()} — $
+              {item.price.toFixed(2)} — spots:{" "}
+              {item.total_spots - (item.num_of_reservations || 0)} <br />
+              Location: {item.location} <br />
+              <button disabled={loading} onClick={() => reserve(item.id)}>
+                Reserve
+              </button>
+            </li>
+          ))}
         </ul>
       )}
+
 
       <h3>Your Reservations</h3> 
       {reservations.length === 0 ? (
