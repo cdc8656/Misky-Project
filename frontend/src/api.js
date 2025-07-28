@@ -77,6 +77,29 @@ export const fetchReservations = async (supabase) => {
   }
 };
 
+// Cancel a reservation
+export const cancelReservation = async (supabase, reservation_id) => {
+  const session = await supabase.auth.getSession();
+  const token = session.data?.session?.access_token;
+
+  if (!token) throw new Error("No auth token found.");
+
+  const response = await fetch(`${API_BASE_URL}/reservations/${reservation_id}/cancel`, {
+    method: "PATCH",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || "Cancel failed.");
+  }
+
+  return await response.json();
+};
+
 
 
 //RESTAURANT FUNCTIONS

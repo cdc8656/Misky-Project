@@ -259,3 +259,68 @@ def create_restaurant_item(
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.patch("/reservations/{reservation_id}/cancel")
+def cancel_reservation(
+    reservation_id: UUID,
+    authorization: str = Header(...)
+):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    user_id = get_user_id_from_jwt(jwt_token)
+    headers = get_auth_headers(jwt_token)
+
+    try:
+        with httpx.Client() as client:
+            # 1. Get reservation details
+            params = {
+                "id": f"eq.{reservation_id}",
+                "select": "customer_id,item_id,status"
+            }
+            res = client.get(
+                f"{SUPABASE_URL}/rest/v1/reservations",
+                headers=headers,
+                params=params,
+            )
+            res.raise_for_status()
+            data = res.json()
+
+            if not data:
+                raise HTTPException(status_code=404, detail="Reservation not found.")
+            reservation = data[0]
+
+            if reservation["customer_id"] != user_id:
+                raise HTTPException(status_code=403, detail="You do not own this reservation.")
+
+            if reservation["status"] == "cancelled":
+                raise HTTPException(status_code=400, detail="Reservation already cancelled.")
+
+            item_id = reservation["item_id"]
+
+            # 2. Cancel the reservation
+            patch_response = client.patch(
+                f"{SUPABASE_URL}/rest/v1/reservations?id=eq.{reservation_id}",
+                headers=headers,
+                json={"status": "cancelled"},
+            )
+            patch_response.raise_for_status()
+
+            # 3. Call Supabase stored function to decrement reservation count
+            rpc_response = client.post(
+                f"{SUPABASE_URL}/rest/v1/rpc/decrement_num_of_reservations",
+                headers=headers,
+                json={"item_uuid": str(item_id)},  # 🛠️ FIXED HERE
+            )
+            if rpc_response.status_code >= 400:
+                print("RPC error:", rpc_response.text)  # 👈 DEBUG this
+                raise HTTPException(
+                    status_code=rpc_response.status_code,
+                    detail="Reservation cancelled but failed to update item count",
+            )
+            rpc_response.raise_for_status()
+
+            return {"success": True, "message": "Reservation cancelled and item count updated."}
+
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react"; //useEffect: runs side-effects (e.g., fetching data after component mounts), useState: allows you to create reactive variables (items, loading, etc.)
 import { supabase } from "./supabaseClient"; //initialize Supabase client, used to get the user session and token
-import { fetchItems, fetchReservations, createReservation } from "../api"; //helper functions that make HTTP requests to FastAPI backend
+import { fetchItems, fetchReservations, createReservation, cancelReservation } from "../api"; //helper functions that make HTTP requests to FastAPI backend
 
 export default function CustomerDashboard({ user }) { //main react component
   //state setup
@@ -89,6 +89,37 @@ export default function CustomerDashboard({ user }) { //main react component
     }
   };
 
+
+  // cancel reservation
+  const cancel = async (reservation_id) => {
+  if (!user?.id) {
+    alert("You are not logged in.");
+    return;
+  }
+
+  setLoading(true);
+  setError("");
+
+  try {
+    // Cancel the reservation via FastAPI helper
+    await cancelReservation(supabase, reservation_id);
+
+    alert("Reservation cancelled!"); // ✅ Give user feedback
+
+    // ✅ Refresh UI state
+    await loadReservations();
+    await loadItems();
+  } catch (err) {
+    console.error("Cancel failed:", err);
+    setError(err.message || "Failed to cancel reservation.");
+    alert("Failed to cancel reservation.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
   //Filter items based on search input
   const filteredItems = items
     .filter(item => (item.total_spots - (item.num_of_reservations || 0)) > 0)
@@ -146,6 +177,11 @@ export default function CustomerDashboard({ user }) { //main react component
               {new Date(r.item.pickup_time).toLocaleString()} — $
               {r.item.price.toFixed(2)} — Status: {r.status} <br />
               Location: <strong>{r.item.location}</strong> <br />
+              {r.status === "active" && (
+                  <button disabled={loading} onClick={() => cancel(r.id)}>
+                    Cancel
+                  </button>
+                )}
             </li>
           ))}
         </ul>
