@@ -104,9 +104,9 @@ export default function CustomerDashboard({ user }) { //main react component
     // Cancel the reservation via FastAPI helper
     await cancelReservation(supabase, reservation_id);
 
-    alert("Reservation cancelled!"); // ✅ Give user feedback
+    alert("Reservation cancelled!"); // Give user feedback
 
-    // ✅ Refresh UI state
+    //Refresh UI state
     await loadReservations();
     await loadItems();
   } catch (err) {
@@ -117,7 +117,6 @@ export default function CustomerDashboard({ user }) { //main react component
     setLoading(false);
   }
 };
-
 
 
   //Filter items based on search input

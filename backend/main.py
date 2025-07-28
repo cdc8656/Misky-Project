@@ -10,7 +10,6 @@ from dotenv import load_dotenv # To load Supabase keys from .env file
 import jwt  # pyjwt to decode JWTs
 
 
-
 load_dotenv() # Load environment variables from the .env locally or from Render's env vars
 
 SUPABASE_URL = os.getenv("SUPABASE_URL") # Supabase url
@@ -186,7 +185,7 @@ def create_reservation(
                 raise HTTPException(status_code=response.status_code, detail=response.text)
 
             # Call RPC (a supabase function) to increment item reservation count
-            # the RPC increments `num_of_reservations` in the items table
+            # this RPC increments `num_of_reservations` in the items table
             rpc_response = client.post(
                 f"{SUPABASE_URL}/rest/v1/rpc/increment_num_of_reservations",
                 headers=headers,
@@ -259,7 +258,8 @@ def create_restaurant_item(
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+# cancel customer item reservation   
 @app.patch("/reservations/{reservation_id}/cancel")
 def cancel_reservation(
     reservation_id: UUID,
@@ -271,7 +271,7 @@ def cancel_reservation(
 
     try:
         with httpx.Client() as client:
-            # 1. Get reservation details
+            #Get reservation details
             params = {
                 "id": f"eq.{reservation_id}",
                 "select": "customer_id,item_id,status"
@@ -296,7 +296,7 @@ def cancel_reservation(
 
             item_id = reservation["item_id"]
 
-            # 2. Cancel the reservation
+            #Cancel the reservation
             patch_response = client.patch(
                 f"{SUPABASE_URL}/rest/v1/reservations?id=eq.{reservation_id}",
                 headers=headers,
@@ -304,14 +304,15 @@ def cancel_reservation(
             )
             patch_response.raise_for_status()
 
-            # 3. Call Supabase stored function to decrement reservation count
+            # Call RPC (a supabase function) to decrement reservation count
+            # this RPC decrements `num_of_reservations` in the items table
             rpc_response = client.post(
                 f"{SUPABASE_URL}/rest/v1/rpc/decrement_num_of_reservations",
                 headers=headers,
-                json={"item_uuid": str(item_id)},  # 🛠️ FIXED HERE
+                json={"item_uuid": str(item_id)},
             )
             if rpc_response.status_code >= 400:
-                print("RPC error:", rpc_response.text)  # 👈 DEBUG this
+                print("RPC error:", rpc_response.text)
                 raise HTTPException(
                     status_code=rpc_response.status_code,
                     detail="Reservation cancelled but failed to update item count",
