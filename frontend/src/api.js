@@ -101,6 +101,32 @@ export const cancelReservation = async (supabase, reservation_id) => {
 };
 
 
+// Confirm a reservation
+export const completeReservation = async (supabase, reservation_id) => {
+  const session = await supabase.auth.getSession();
+  const token = session.data?.session?.access_token;
+
+  if (!token) throw new Error("No auth token found.");
+
+  const response = await fetch(`${API_BASE_URL}/reservations/${reservation_id}/complete`, {
+    method: "PATCH",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || "Completion failed.");
+  }
+
+  return await response.json();
+};
+
+
+
+
 
 //RESTAURANT FUNCTIONS
 
@@ -136,5 +162,41 @@ export const createRestaurantItem = async (supabase, itemData) => {
   } catch (err) {
     console.error("Error creating restaurant item:", err);
     throw new Error(err.response?.data?.detail || "Failed to create item");
+  }
+};
+
+
+// Fetch notifications for the logged-in restaurant
+export const fetchNotifications = async (supabase) => {
+  const token = await getAccessToken(supabase);
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    const res = await axios.get(`${API_BASE_URL}/notifications`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data; // returns array of notifications
+  } catch (err) {
+    console.error("Error fetching notifications:", err);
+    throw new Error(err.response?.data?.detail || "Failed to fetch notifications");
+  }
+};
+
+// (Optional) Create a notification (mostly for admin/testing purposes)
+export const createNotification = async (supabase, notificationData) => {
+  const token = await getAccessToken(supabase);
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    const res = await axios.post(`${API_BASE_URL}/notifications`, notificationData, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Error creating notification:", err);
+    throw new Error(err.response?.data?.detail || "Failed to create notification");
   }
 };

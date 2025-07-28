@@ -68,6 +68,14 @@ class Reservation(BaseModel):
     timestamp: datetime
     status: Optional[str] = "active"  #valid statuses: "active", "cancelled", "completed"
 
+class Notification(BaseModel):
+    id: Optional[UUID] = None
+    restaurant_id: str
+    reservation_id: Optional[str] = None
+    type: Optional[str] = None
+    message: str
+    created_at: Optional[datetime] = None
+
 
 #Root Health Check Endpoint
 @app.get("/")
@@ -215,8 +223,7 @@ def get_restaurant_items(
     try:
         with httpx.Client() as client:
             params = {
-                "select": "*",
-                "restaurant_id": f"eq.{user_id}"  # Filter to only this restaurant's items
+                "restaurant_id": f"eq.{user_id}"  # Filter by current user's restaurant_id
             }
 
             response = client.get(
@@ -232,6 +239,7 @@ def get_restaurant_items(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
 # Create item with restaurant_id linked to current user
 @app.post("/restaurant/items")
 def create_restaurant_item(
@@ -243,7 +251,7 @@ def create_restaurant_item(
     headers = get_auth_headers(jwt_token)
 
     payload = item.dict()
-    payload["restaurant_id"] = user_id  # Inject restaurant_id from JWT
+    payload["restaurant_id"] = user_id  # Enforce restaurant ownership from JWT
 
     try:
         with httpx.Client() as client:
@@ -259,6 +267,7 @@ def create_restaurant_item(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # cancel customer item reservation   
 @app.patch("/reservations/{reservation_id}/cancel")
 def cancel_reservation(
@@ -271,7 +280,98 @@ def cancel_reservation(
 
     try:
         with httpx.Client() as client:
-            #Get reservation details
+            # 1. Get reservation details
+            res = client.get(
+                f"{SUPABASE_URL}/rest/v1/reservations",
+                headers=headers,
+                params={
+                    "id": f"eq.{reservation_id}",
+                    "select": "customer_id,item_id,status"
+                },
+            )
+            res.raise_for_status()
+            data = res.json()
+
+            if not data:
+                raise HTTPException(status_code=404, detail="Reservation not found.")
+
+            reservation = data[0]
+
+            if reservation["customer_id"] != user_id:
+                raise HTTPException(status_code=403, detail="You do not own this reservation.")
+
+            if reservation["status"] == "cancelled":
+                raise HTTPException(status_code=400, detail="Reservation already cancelled.")
+
+            item_id = reservation["item_id"]
+
+            # 2. Cancel the reservation
+            patch_response = client.patch(
+                f"{SUPABASE_URL}/rest/v1/reservations?id=eq.{reservation_id}",
+                headers=headers,
+                json={"status": "cancelled"},
+            )
+            patch_response.raise_for_status()
+
+            # 3. Decrement reservation count
+            rpc_response = client.post(
+                f"{SUPABASE_URL}/rest/v1/rpc/decrement_num_of_reservations",
+                headers=headers,
+                json={"item_uuid": str(item_id)},
+            )
+            rpc_response.raise_for_status()
+
+            # 4. Get item info to find restaurant_id
+            item_res = client.get(
+                f"{SUPABASE_URL}/rest/v1/items",
+                headers=headers,
+                params={"id": f"eq.{item_id}", "select": "information,restaurant_id"},
+            )
+            item_res.raise_for_status()
+            item_data = item_res.json()
+
+            if not item_data:
+                raise HTTPException(status_code=404, detail="Associated item not found.")
+
+            item = item_data[0]
+            restaurant_id = item["restaurant_id"]
+            item_info = item["information"]
+
+            # 5. Send notification to restaurant
+            notification_payload = {
+                "restaurant_id": restaurant_id,
+                "reservation_id": str(reservation_id),
+                "type": "cancel",
+                "message": f"Reservation for '{item_info}' was cancelled by a customer.",
+                "customer_id": user_id
+            }
+            notif_response = client.post(
+                f"{SUPABASE_URL}/rest/v1/notifications",
+                headers=headers,
+                json=notification_payload,
+            )
+            notif_response.raise_for_status()
+
+            return {"success": True, "message": "Reservation cancelled, count updated, and restaurant notified."}
+
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# confirm customer item reservation
+@app.patch("/reservations/{reservation_id}/complete")
+def confirm_reservation(
+    reservation_id: UUID,
+    authorization: str = Header(...)
+):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    user_id = get_user_id_from_jwt(jwt_token)
+    headers = get_auth_headers(jwt_token)
+
+    try:
+        with httpx.Client() as client:
+            # Step 1: Get reservation details
             params = {
                 "id": f"eq.{reservation_id}",
                 "select": "customer_id,item_id,status"
@@ -291,36 +391,71 @@ def cancel_reservation(
             if reservation["customer_id"] != user_id:
                 raise HTTPException(status_code=403, detail="You do not own this reservation.")
 
-            if reservation["status"] == "cancelled":
-                raise HTTPException(status_code=400, detail="Reservation already cancelled.")
+            if reservation["status"] == "completed":
+                raise HTTPException(status_code=400, detail="Reservation already completed.")
 
-            item_id = reservation["item_id"]
-
-            #Cancel the reservation
+            # Step 2: Confirm the reservation
             patch_response = client.patch(
                 f"{SUPABASE_URL}/rest/v1/reservations?id=eq.{reservation_id}",
                 headers=headers,
-                json={"status": "cancelled"},
+                json={"status": "completed"},
             )
             patch_response.raise_for_status()
 
-            # Call RPC (a supabase function) to decrement reservation count
-            # this RPC decrements `num_of_reservations` in the items table
-            rpc_response = client.post(
-                f"{SUPABASE_URL}/rest/v1/rpc/decrement_num_of_reservations",
+            return {"success": True, "message": "Reservation completed."}
+
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Get notifications for the authenticated restaurant
+@app.get("/notifications", response_model=list[Notification])
+def get_notifications(
+    authorization: str = Header(...)
+):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    user_id = get_user_id_from_jwt(jwt_token)
+    headers = get_auth_headers(jwt_token)
+
+    try:
+        with httpx.Client() as client:
+            # Correct Supabase query params
+            params = {
+                "restaurant_id": f"eq.{user_id}",
+                "order": "created_at.desc"
+            }
+            response = client.get(
+                f"{SUPABASE_URL}/rest/v1/notifications",
                 headers=headers,
-                json={"item_uuid": str(item_id)},
+                params=params,
             )
-            if rpc_response.status_code >= 400:
-                print("RPC error:", rpc_response.text)
-                raise HTTPException(
-                    status_code=rpc_response.status_code,
-                    detail="Reservation cancelled but failed to update item count",
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Create a notification manually (optional, if needed)
+@app.post("/notifications")
+def create_notification(
+    notification: Notification,
+    authorization: str = Header(...)
+):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    headers = get_auth_headers(jwt_token)
+    payload = notification.dict(exclude_unset=True)
+    try:
+        with httpx.Client() as client:
+            response = client.post(
+                f"{SUPABASE_URL}/rest/v1/notifications",
+                headers=headers,
+                json=payload,
             )
-            rpc_response.raise_for_status()
-
-            return {"success": True, "message": "Reservation cancelled and item count updated."}
-
+            response.raise_for_status()
+            return response.json()
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:

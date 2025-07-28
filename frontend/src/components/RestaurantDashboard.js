@@ -3,16 +3,19 @@ import { supabase } from "./supabaseClient";
 import {
   fetchRestaurantItems,
   createRestaurantItem,
+  fetchNotifications,
 } from "../api.js";
 
 export default function RestaurantDashboard({ user }) {
   const [form, setForm] = useState({
     information: "",
     pickup_time: "",
-    total_spots: null,
-    price: null,
+    total_spots: 1,
+    price: 0,
   });
+
   const [items, setItems] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -35,8 +38,52 @@ export default function RestaurantDashboard({ user }) {
     }
   };
 
+  const loadNotifications = async () => {
+    if (!user?.id) {
+      setNotifications([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await fetchNotifications(supabase);
+      setNotifications(data);
+    } catch (error) {
+      setError(error.message);
+      console.error("Failed to load notifications:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    if (!user?.id) return;
+
     loadItems();
+    loadNotifications();
+
+    // Subscribe to real-time notifications for this restaurant (GOES THROUGH SUPABASE)
+    const channel = supabase
+      .channel("restaurant-notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `restaurant_id=eq.${user.id}`,
+        },
+        (payload) => {
+          setNotifications((prev) => [payload.new, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user?.id]);
 
   const handleChange = (e) => {
@@ -53,7 +100,6 @@ export default function RestaurantDashboard({ user }) {
     setError(null);
 
     const payload = {
-      restaurant_id: user.id,
       information: form.information,
       pickup_time: form.pickup_time,
       total_spots: parseInt(form.total_spots, 10),
@@ -80,6 +126,24 @@ export default function RestaurantDashboard({ user }) {
   return (
     <div>
       <h2>Restaurant Dashboard</h2>
+
+      {/* Display notifications */}
+      <div>
+        <h3>Notifications</h3>
+        {notifications.length === 0 && <p>No notifications yet.</p>}
+        <ul>
+          {notifications.map((note) => (
+            <li key={note.id}>
+              {note.message} —{" "}
+              <span style={{ fontSize: "0.85em", color: "gray" }}>
+                {new Date(note.created_at).toLocaleString()}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Item creation form */}
       <form onSubmit={handleSubmit}>
         <input
           name="information"
