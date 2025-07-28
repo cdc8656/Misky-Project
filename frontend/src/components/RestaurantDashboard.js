@@ -4,6 +4,8 @@ import {
   fetchRestaurantItems,
   createRestaurantItem,
   fetchNotifications,
+  uploadItemImage,
+  updateRestaurantItemImage,
 } from "../api.js";
 
 export default function RestaurantDashboard({ user }) {
@@ -12,6 +14,7 @@ export default function RestaurantDashboard({ user }) {
     pickup_time: "",
     total_spots: 1,
     price: 0,
+    image: null,
   });
 
   const [items, setItems] = useState([]);
@@ -24,10 +27,8 @@ export default function RestaurantDashboard({ user }) {
       setItems([]);
       return;
     }
-
     setLoading(true);
     setError(null);
-
     try {
       const data = await fetchRestaurantItems(supabase);
       setItems(data || []);
@@ -43,16 +44,14 @@ export default function RestaurantDashboard({ user }) {
       setNotifications([]);
       return;
     }
-
     setLoading(true);
     setError(null);
-
     try {
       const data = await fetchNotifications(supabase);
-      setNotifications(data);
-    } catch (error) {
-      setError(error.message);
-      console.error("Failed to load notifications:", error);
+      setNotifications(data || []);
+    } catch (err) {
+      setError(err.message || "Failed to fetch notifications");
+      console.error("Failed to load notifications:", err);
     } finally {
       setLoading(false);
     }
@@ -64,7 +63,6 @@ export default function RestaurantDashboard({ user }) {
     loadItems();
     loadNotifications();
 
-    // Subscribe to real-time notifications for this restaurant (GOES THROUGH SUPABASE)
     const channel = supabase
       .channel("restaurant-notifications")
       .on(
@@ -87,11 +85,18 @@ export default function RestaurantDashboard({ user }) {
   }, [user?.id]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const { name, value, files } = e.target;
+    if (name === "image") {
+      setForm((prev) => ({
+        ...prev,
+        image: files?.[0] || null,
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -107,50 +112,84 @@ export default function RestaurantDashboard({ user }) {
     };
 
     try {
-      await createRestaurantItem(supabase, payload);
-      alert("Offer created!");
+      // Create item first
+      const newItem = await createRestaurantItem(supabase, payload);
+
+      if (!newItem || !newItem.id) {
+        throw new Error("Invalid response from createRestaurantItem");
+      }
+
+      if (form.image && form.image instanceof File) {
+        const imageUrl = await uploadItemImage(supabase, form.image, newItem.id);
+
+        console.log("Uploaded image URL:", imageUrl);
+
+        // Patch item with image URL
+        await updateRestaurantItemImage(newItem.id, imageUrl, supabase);
+
+        // Reload items to reflect image_url update
+        await loadItems();
+      } else {
+        await loadItems();
+      }
+
+      alert("Offer created successfully!");
       setForm({
         information: "",
         pickup_time: "",
         total_spots: 1,
         price: 0,
+        image: null,
       });
-      loadItems();
     } catch (err) {
-      alert("Failed to create offer: " + (err.message || err));
+      console.error("Create offer error:", err);
+      alert(
+        "Failed to create offer: " +
+          (err?.response?.data?.detail || err?.message || JSON.stringify(err) || "Unknown error")
+      );
+      setError(
+        err?.response?.data?.detail ||
+          err?.message ||
+          JSON.stringify(err) ||
+          "Failed to create offer"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div>
-      <h2>Restaurant Dashboard</h2>
+    <div className="max-w-5xl mx-auto px-4 py-6">
+      <h2 className="text-2xl font-bold mb-4">Restaurant Dashboard</h2>
 
-      {/* Display notifications */}
-      <div>
-        <h3>Notifications</h3>
-        {notifications.length === 0 && <p>No notifications yet.</p>}
-        <ul>
-          {notifications.map((note) => (
-            <li key={note.id}>
-              {note.message} —{" "}
-              <span style={{ fontSize: "0.85em", color: "gray" }}>
-                {new Date(note.created_at).toLocaleString()}
-              </span>
-            </li>
-          ))}
-        </ul>
+      {/* Notifications */}
+      <div className="mb-8">
+        <h3 className="text-xl font-semibold mb-3">Notifications</h3>
+        {notifications.length === 0 ? (
+          <p>No notifications yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {notifications.map((note) => (
+              <li key={note.id} className="text-gray-700">
+                {note.message} —{" "}
+                <span className="text-gray-500 text-sm">
+                  {new Date(note.created_at).toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
-      {/* Item creation form */}
-      <form onSubmit={handleSubmit}>
+      {/* Item Creation Form */}
+      <form onSubmit={handleSubmit} className="mb-10 space-y-4 max-w-md">
         <input
           name="information"
           placeholder="Info"
           value={form.information}
           onChange={handleChange}
           required
+          className="w-full p-2 border border-gray-300 rounded"
         />
         <input
           name="pickup_time"
@@ -159,46 +198,115 @@ export default function RestaurantDashboard({ user }) {
           value={form.pickup_time}
           onChange={handleChange}
           required
+          className="w-full p-2 border border-gray-300 rounded"
         />
         <input
           name="total_spots"
-          placeholder="Number of Servings"
           type="number"
           min="1"
+          placeholder="Number of Servings"
           value={form.total_spots}
           onChange={handleChange}
           required
+          className="w-full p-2 border border-gray-300 rounded"
         />
         <input
           name="price"
-          placeholder="Price"
           type="number"
           step="0.01"
+          placeholder="Price"
           value={form.price}
           onChange={handleChange}
           required
+          className="w-full p-2 border border-gray-300 rounded"
         />
-        <button type="submit" disabled={loading}>
+        <input
+          type="file"
+          name="image"
+          accept="image/*"
+          onChange={handleChange}
+          className="w-full"
+        />
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+        >
           {loading ? "Submitting..." : "Create Offer"}
         </button>
       </form>
 
-      <h3>Your Current Offers</h3>
-      {loading && <p>Loading offers…</p>}
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
-      {!loading && !error && items.length === 0 && <p>No offers found.</p>}
-      <ul>
-        {items.map((item) => (
-          <li key={item.id}>
-            <strong>{item.information}</strong> <br />
-            Price: ${item.price.toFixed(2)} <br />
-            Reservations Made: {item.num_of_reservations || 0} <br />
-            Available spots:{" "}
-            {item.total_spots - (item.num_of_reservations || 0)} <br />
-            Pickup time: {new Date(item.pickup_time).toLocaleString()}
-          </li>
-        ))}
-      </ul>
+      {/* Current Offers */}
+      <h3 className="text-xl font-semibold mb-4">Your Current Offers</h3>
+              {loading && <p>Loading offers…</p>}
+              {error && <p className="text-red-600 mb-4">Error: {error}</p>}
+              {!loading && !error && items.length === 0 && <p>No offers found.</p>}
+
+        <div style={{ display: "grid", gap: "1rem" }}>
+          {items.map((item) => (
+            <div
+              key={item.id}
+              style={{
+                border: "1px solid #ccc",
+                borderRadius: "8px",
+                padding: "1rem",
+                boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                display: "flex",
+                gap: "1rem",
+                alignItems: "center",
+              }}
+            >
+              {/* Image on the left */}
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={item.information}
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    objectFit: "cover",
+                    borderRadius: "8px",
+                    flexShrink: 0,
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    backgroundColor: "#e2e8f0", // light gray
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#9ca3af", // gray text
+                    fontSize: "0.875rem",
+                    flexShrink: 0,
+                  }}
+                >
+                  No Image
+                </div>
+              )}
+
+              {/* Item details on the right */}
+              <div>
+                <h4 style={{ margin: "0 0 0.5rem" }}>{item.information}</h4>
+                <p style={{ margin: "0.25rem 0" }}>
+                  <strong>Pickup:</strong> {new Date(item.pickup_time).toLocaleString()}
+                </p>
+                <p style={{ margin: "0.25rem 0" }}>
+                  <strong>Price:</strong> ${item.price.toFixed(2)} &nbsp;&nbsp;
+                  <strong>Spots left:</strong> {item.total_spots - (item.num_of_reservations || 0)}
+                </p>
+                <p style={{ margin: "0.25rem 0" }}>
+                  <strong>Location:</strong> {item.location}
+                </p>
+                {/* You can add buttons here if needed */}
+              </div>
+            </div>
+          ))}
+        </div>
+
     </div>
   );
 }

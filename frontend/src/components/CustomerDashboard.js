@@ -165,61 +165,121 @@ const complete = async (reservation_id) => {
 
 // UI/HTML Portion
   return (
-    <div>
-      <h2>Customer Dashboard</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div className="max-w-5xl mx-auto px-4 py-6">
+      <h2 className="text-2xl font-bold mb-4">Customer Dashboard</h2>
+
+      {error && <p className="text-red-500">{error}</p>}
       {loading && <p>Processing reservation…</p>}
 
-      {/*Search input*/}
+      {/* Search input */}
       <input
         type="text"
         placeholder="Search food or restaurant location..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        style={{ marginBottom: "1rem", padding: "0.5rem", width: "100%" }}
+        className="mb-6 p-2 border border-gray-300 rounded w-full"
       />
 
-      <h3>Available Food Offers</h3>
-      {filteredItems.length === 0 ? (
-        <p>No matching food offers at the moment.</p>
-      ) : (
-        <ul>
-          {filteredItems.map((item) => (
-            <li key={item.id} style={{ marginBottom: "0.5rem" }}>
-              <strong>{item.information}</strong> —{" "}
-              {new Date(item.pickup_time).toLocaleString()} — $
-              {item.price.toFixed(2)} — spots:{" "}
-              {item.total_spots - (item.num_of_reservations || 0)} <br />
-              Location: {item.location} <br />
-              <button disabled={loading} onClick={() => reserve(item.id)}>
-                Reserve
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* === AVAILABLE FOOD OFFERS === */}
+      <h3 className="text-xl font-semibold mb-4">Available Food Offers</h3>
+          {filteredItems.length === 0 ? (
+            <p>No matching food offers at the moment.</p>
+          ) : (
+            <div style={{ display: "grid", gap: "1rem" }}>
+              {filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    border: "1px solid #ccc",
+                    borderRadius: "8px",
+                    padding: "1rem",
+                    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                    display: "flex",
+                    gap: "1rem",
+                    alignItems: "center",
+                  }}
+                >
+                  {/* Image on the left */}
+                  {item.image_url && (
+                    <img
+                      src={item.image_url}
+                      alt={item.information}
+                      style={{
+                        width: "100px",
+                        height: "100px",
+                        objectFit: "cover",
+                        borderRadius: "8px",
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
 
+                  {/* Item details on the right */}
+                  <div>
+                    <h4 style={{ margin: "0 0 0.5rem" }}>{item.information}</h4>
+                    <p style={{ margin: "0.25rem 0" }}>
+                      <strong>Pickup:</strong> {new Date(item.pickup_time).toLocaleString()}
+                    </p>
+                    <p style={{ margin: "0.25rem 0" }}>
+                      <strong>Price:</strong> ${item.price.toFixed(2)} &nbsp;&nbsp;
+                      <strong>Spots left:</strong> {item.total_spots - (item.num_of_reservations || 0)}
+                    </p>
+                    <p style={{ margin: "0.25rem 0" }}>
+                      <strong>Location:</strong> {item.location}
+                    </p>
+                    <button disabled={loading} onClick={() => reserve(item.id)} style={{ marginTop: "0.5rem" }}>
+                      Reserve
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
-      <h3>Your Reservations</h3> 
+      {/* === CUSTOMER RESERVATIONS === */}
+      <h3 className="text-xl font-semibold mt-10 mb-4">Your Reservations</h3>
       {reservations.length === 0 ? (
         <p>You have no reservations yet.</p>
       ) : (
-        <ul>
+        <ul className="space-y-4">
           {reservations.map((r) => (
-            <li key={r.id} style={{ marginBottom: "0.5rem" }}>
-              <strong>{r.item.information}</strong> —{" "}
-              {new Date(r.item.pickup_time).toLocaleString()} — $
-              {r.item.price.toFixed(2)} — Status: {r.status} <br />
-              Location: <strong>{r.item.location}</strong> <br />
+            <li
+              key={r.id}
+              className="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm"
+            >
+              <h4 className="font-semibold text-lg mb-1">{r.item.information}</h4>
+              <p className="text-gray-700 mb-1">
+                <span className="font-semibold">Pickup Time:</span>{" "}
+                {new Date(r.item.pickup_time).toLocaleString()}
+              </p>
+              <p className="text-gray-700 mb-1">
+                <span className="font-semibold">Price:</span> ${r.item.price.toFixed(2)}
+              </p>
+              <p className="text-gray-700 mb-1">
+                <span className="font-semibold">Location:</span> {r.item.location}
+              </p>
+              <p className="text-gray-700 mb-3">
+                <span className="font-semibold">Status:</span> {r.status}
+              </p>
+
+              {/* Cancel/Complete buttons */}
               {r.status === "active" && (
-                <>
-                  <button disabled={loading} onClick={() => cancel(r.id)} style={{ marginRight: "0.5rem" }}>
+                <div className="flex space-x-3">
+                  <button
+                    disabled={loading}
+                    onClick={() => cancel(r.id)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                  >
                     Cancel
                   </button>
-                  <button disabled={loading} onClick={() => complete(r.id)}>
+                  <button
+                    disabled={loading}
+                    onClick={() => complete(r.id)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                  >
                     Complete
                   </button>
-                </>
+                </div>
               )}
             </li>
           ))}
@@ -227,4 +287,5 @@ const complete = async (reservation_id) => {
       )}
     </div>
   );
+
 }

@@ -158,6 +158,11 @@ export const createRestaurantItem = async (supabase, itemData) => {
         Authorization: `Bearer ${token}`,
       },
     });
+
+    // If res.data is a list, return the first item
+    if (Array.isArray(res.data)) {
+      return res.data[0];
+    }
     return res.data;
   } catch (err) {
     console.error("Error creating restaurant item:", err);
@@ -165,6 +170,50 @@ export const createRestaurantItem = async (supabase, itemData) => {
   }
 };
 
+// Upload an image to Supabase Storage and return its public URL
+export const uploadItemImage = async (supabase, file, itemId) => {
+  if (!file) throw new Error("No file provided");
+
+  const fileExt = file.name.split(".").pop();
+  const filePath = `item-images/${itemId}-${Date.now()}.${fileExt}`;
+
+  const { error } = await supabase.storage
+    .from("item-images")
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: true,
+    });
+
+  if (error) {
+    throw new Error("Failed to upload image: " + error.message);
+  }
+
+  const { data } = supabase.storage.from("item-images").getPublicUrl(filePath);
+  return data.publicUrl;
+};
+
+// Update the restaurant item with the uploaded image URL
+export const updateRestaurantItemImage = async (itemId, imageUrl, supabase) => {
+  const token = await getAccessToken(supabase);
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    const res = await axios.patch(
+      `${API_BASE_URL}/restaurant/items/${itemId}`, // Make sure this matches your backend route!
+      { image_url: imageUrl },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error updating restaurant item image:", err);
+    throw new Error(err.response?.data?.detail || "Failed to update item image");
+  }
+};
 
 // Fetch notifications for the logged-in restaurant
 export const fetchNotifications = async (supabase) => {

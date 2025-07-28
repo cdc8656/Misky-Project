@@ -61,6 +61,7 @@ class Item(BaseModel):
     price: float
     pickup_time: str
     total_spots: int  # Number of reservation spots for item
+    image_url: Optional[str] = None 
 
 class Reservation(BaseModel):
     customer_id: UUID # Supabase customer ID
@@ -116,25 +117,71 @@ def get_items(
 @app.post("/items")
 def create_item(
     item: Item, 
-    authorization: str = Header(...) # JWT from frontend request
+    authorization: str = Header(...)
 ):
-
-    jwt = authorization.replace("Bearer ", "").strip() #Formats JWT for use
+    jwt = authorization.replace("Bearer ", "").strip()
     headers = get_auth_headers(jwt)
 
     try:
-        with httpx.Client() as client: #Supabase Request
+        with httpx.Client() as client:
             response = client.post(
-                f"{SUPABASE_URL}/rest/v1/items", # Insert into items table
+                f"{SUPABASE_URL}/rest/v1/items?return=representation",
                 headers=headers,
-                json=item.dict(),  # Convert model to dict
+                json=item.dict(exclude_none=True),  # exclude None values
             )
             response.raise_for_status()
-            return response.json() # Return created item to frontend
-        
-    #Handle errors
+            return response.json()
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.patch("/restaurant/items/{item_id}")
+def update_restaurant_item(
+    item_id: UUID,
+    update_data: dict,  # expects fields to update, e.g. {"image_url": "..."}
+    authorization: str = Header(...)
+):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    user_id = get_user_id_from_jwt(jwt_token)
+    headers = get_auth_headers(jwt_token)
+
+    try:
+        with httpx.Client() as client:
+            # 1. Verify ownership: Get item restaurant_id
+            res = client.get(
+                f"{SUPABASE_URL}/rest/v1/items",
+                headers=headers,
+                params={"id": f"eq.{item_id}", "select": "restaurant_id"},
+            )
+            res.raise_for_status()
+            items = res.json()
+            if not items:
+                raise HTTPException(status_code=404, detail="Item not found")
+            if items[0]["restaurant_id"] != user_id:
+                raise HTTPException(status_code=403, detail="Not authorized to update this item")
+
+            # 2. PATCH the item with update_data
+            patch_res = client.patch(
+                f"{SUPABASE_URL}/rest/v1/items?id=eq.{item_id}",
+                headers=headers,
+                json=update_data,
+            )
+            patch_res.raise_for_status()
+            # Supabase returns a list of updated rows (usually one element)
+            updated_items = patch_res.json()
+            if not updated_items:
+                raise HTTPException(status_code=500, detail="Failed to update item")
+            return updated_items[0]  # Return updated item object
+
+    except httpx.HTTPStatusError as e:
+        # e.response.text is a JSON string with error details; try to parse for better detail
+        try:
+            detail = e.response.json()
+        except Exception:
+            detail = e.response.text
+        raise HTTPException(status_code=e.response.status_code, detail=detail)
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
