@@ -7,6 +7,8 @@ import RestaurantDashboard from "./components/RestaurantDashboard";
 import CustomerDashboard from "./components/CustomerDashboard";
 import AuthForm from "./components/AuthForm";
 import HomePage from "./components/HomePage";
+import ProfilePage from "./components/ProfilePage";
+import ResetPassword from "./components/ResetPassword";
 
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY;
@@ -98,6 +100,11 @@ export default function App() {
           }
         />
 
+        <Route 
+          path="/reset-password" element={<ResetPassword supabase={supabase} />
+          } 
+        />
+
         <Route
           path="/dashboard"
           element={
@@ -115,9 +122,23 @@ export default function App() {
           }
         />
 
+        {/* Profile page accessible only if logged in */}
+        <Route
+          path="/profile"
+          element={
+            user ? (
+              <ProfilePage user={user} supabase={supabase} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+
+        {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
 
+      {/* Show logout button when logged in */}
       {user && (
         <div style={{ position: "fixed", top: 10, right: 20 }}>
           <button onClick={handleLogout}>Logout</button>

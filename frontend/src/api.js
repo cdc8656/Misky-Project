@@ -19,6 +19,46 @@ export const getAccessToken = async (supabase) => { //supabase.auth.getSession()
 };
 
 
+
+//USER FUNCTIONS
+
+// Fetch the profile of the logged-in user
+export const fetchUserProfile = async (supabase) => {
+  const token = await getAccessToken(supabase);
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    const res = await axios.get(`${API_BASE_URL}/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Error fetching profile:", err);
+    throw new Error(err.response?.data?.detail || "Failed to fetch profile");
+  }
+};
+
+// Update profile information (name, location, contact, picture)
+export const updateUserProfile = async (supabase, profileData) => {
+  const token = await getAccessToken(supabase);
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    const res = await axios.patch(`${API_BASE_URL}/profile`, profileData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Error updating profile:", err);
+    throw new Error(err.response?.data?.detail || "Failed to update profile");
+  }
+};
+
+
+
 //CUSTOMER FUNCTIONS
 // Fetch all available food items (for customers)
 export const fetchItems = async (supabase) => {

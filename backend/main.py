@@ -558,7 +558,7 @@ def cancel_item(
                     headers=headers,
                     json={"status": "cancelled"},
                 )
-                print("FUCK PENIS",cancel_resv_res.status_code, cancel_resv_res.text)
+                print(cancel_resv_res.status_code, cancel_resv_res.text)
                 cancel_resv_res.raise_for_status()
 
                 # Create notification for customer and check success
@@ -581,3 +581,51 @@ def cancel_item(
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# user gets their profile
+@app.get("/profile")
+def get_profile(authorization: str = Header(...)):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    user_id = get_user_id_from_jwt(jwt_token)
+
+    headers = get_auth_headers(jwt_token)
+    try:
+        with httpx.Client() as client:
+            res = client.get(
+                f"{SUPABASE_URL}/rest/v1/profiles?user_id=eq.{user_id}&select=*",
+                headers=headers,
+            )
+            res.raise_for_status()
+            data = res.json()
+            if not data:
+                raise HTTPException(status_code=404, detail="Profile not found.")
+            return data[0]
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+#user updates their profile
+@app.patch("/profile")
+def update_profile(payload: dict, authorization: str = Header(...)):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    user_id = get_user_id_from_jwt(jwt_token)
+    headers = get_auth_headers(jwt_token)
+
+    try:
+        with httpx.Client() as client:
+            res = client.patch(
+                f"{SUPABASE_URL}/rest/v1/profiles?user_id=eq.{user_id}",
+                headers=headers,
+                json=payload,
+            )
+            res.raise_for_status()
+            return {"success": True, "message": "Profile updated successfully."}
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+

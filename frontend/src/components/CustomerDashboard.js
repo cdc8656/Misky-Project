@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react"; //useEffect: runs side-effects (e.g., fetching data after component mounts), useState: allows you to create reactive variables (items, loading, etc.)
 import { supabase } from "./supabaseClient"; //initialize Supabase client, used to get the user session and token
+import { Link } from "react-router-dom"; //Link for navigation
 import { 
   fetchItems, 
   fetchReservations, 
@@ -217,7 +218,11 @@ const complete = async (reservation_id) => {
 // UI/HTML Portion
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      <h2 className="text-2xl font-bold mb-4">Customer Dashboard</h2>
+      <h2 className="text-2xl font-bold mb-4">Customer Dashboard
+        <Link to="/profile" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Profile
+        </Link>
+      </h2>
 
       {error && <p className="text-red-500">{error}</p>}
       {loading && <p>Processing reservation…</p>}

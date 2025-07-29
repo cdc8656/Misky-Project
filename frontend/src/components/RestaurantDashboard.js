@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
+import { Link } from "react-router-dom"; //Link for navigation
 import {
   fetchRestaurantItems,
   createRestaurantItem,
@@ -181,7 +182,11 @@ export default function RestaurantDashboard({ user }) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      <h2 className="text-2xl font-bold mb-4">Restaurant Dashboard</h2>
+      <h2 className="text-2xl font-bold mb-4">Restaurant Dashboard
+        <Link to="/profile" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Profile
+        </Link>
+      </h2>
 
       {/* Notifications */}
       <div className="mb-8">
