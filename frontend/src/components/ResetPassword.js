@@ -1,22 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
+function getHashParams() {
+  const hash = window.location.hash.substring(1); // remove #
+  const params = new URLSearchParams(hash);
+  return Object.fromEntries(params.entries());
+}
 
 export default function ResetPassword({ supabase }) {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-
-  const accessToken = searchParams.get("access_token");
+  const [accessToken, setAccessToken] = useState(null);
 
   useEffect(() => {
-    if (!accessToken) {
+    const params = getHashParams();
+    if (params.access_token) {
+      setAccessToken(params.access_token);
+    } else {
       setErrorMsg("Invalid or missing access token.");
     }
-  }, [accessToken]);
+  }, []);
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
@@ -31,20 +38,24 @@ export default function ResetPassword({ supabase }) {
     }
 
     try {
-      // Use supabase.auth.updateUser with the access token and new password
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      }, {
-        // Pass the access token as the session
-        // Note: This depends on your supabase client version - some require this to be in headers or a session object
-        // The current supabase-js v2 uses setSession instead of this param, but for password reset it works like this:
-        // Alternatively you can set session manually before this call.
-        // If your version requires, do: supabase.auth.setSession({ access_token: accessToken })
-        // Here, I'll just show the simple updateUser call.
+      // Set the session with the access token from the URL
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
       });
 
-      if (error) {
-        setErrorMsg(error.message);
+      if (sessionError) {
+        setErrorMsg(`Failed to set session: ${sessionError.message}`);
+        setLoading(false);
+        return;
+      }
+
+      // Now update the user's password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateError) {
+        setErrorMsg(updateError.message);
       } else {
         setSuccessMsg("Password successfully reset! You can now log in.");
       }
@@ -61,6 +72,7 @@ export default function ResetPassword({ supabase }) {
       <h2>Reset Password</h2>
 
       {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
+
       {successMsg && (
         <p style={{ color: "green" }}>
           {successMsg}{" "}
