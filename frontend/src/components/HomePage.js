@@ -8,7 +8,7 @@ export default function HomePage() {
   return (
     <div style={{ textAlign: "center", marginTop: "100px" }}>
       <h1>Welcome to the Food Reservation App</h1>
-      <h5>Remember the time rey gave me 20 whole United States Dollars to go to nearest homeless shelter to help the people in need? </h5>
+      <h5>Remember the time Rey gave me 20 whole United States Dollars to go to nearest homeless shelter to help the people in need? </h5>
       <br></br>
       <button onClick={() => navigate("/login")} style={{ margin: "10px" }}>
         Login

@@ -8,12 +8,14 @@ import {
   fetchReservations, 
   createReservation, 
   cancelReservation, 
-  completeReservation } from "../api"; //helper functions that make HTTP requests to FastAPI backend
+  completeReservation,
+  fetchNotifications } from "../api"; //helper functions that make HTTP requests to FastAPI backend
 
 export default function CustomerDashboard({ user }) { //main react component
   //state setup
   const [items, setItems] = useState([]); //food items pulled from the backend
   const [reservations, setReservations] = useState([]); //current user’s reservations
+  const [notifications, setNotifications] = useState([]); //// Notifications state
   const [loading, setLoading] = useState(false); //loading tracks if app is currently fetching data
   const [error, setError] = useState(""); //error messaging if error encountered during processes
   const [searchTerm, setSearchTerm] = useState(""); //search terms
@@ -48,13 +50,61 @@ export default function CustomerDashboard({ user }) { //main react component
     }
   };
 
+  
+  // Load customer notifications
+  const loadNotifications = async () => {
+    if (!user?.id) {
+      setNotifications([]);
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      // Fetch notifications for this customer via Supabase
+      const data = await fetchNotifications(supabase);
+      setNotifications(data || []);
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+      setError(err.message || "Failed to load notifications.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   useEffect(() => {
     loadItems(); 
   }, []); //Run loadItems() when the component first mounts (empty [] dependency)
 
   useEffect(() => {
     loadReservations();
-  }, [user?.id]); //Re-fetch reservations when the user logs in or changes
+    loadNotifications(); // load notifications on user change
+
+    if (!user?.id) return;
+
+    // Subscribe to realtime notifications for this customer
+    const channel = supabase
+      .channel("customer-notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `customer_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Prepend new notification to the list
+          setNotifications((prev) => [payload.new, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+  
 
   // Make a reservation
   const reserve = async (item_id) => { // Called when the user clicks the Reserve button for a food item
@@ -157,6 +207,7 @@ const complete = async (reservation_id) => {
   //Filter items based on search input
   const filteredItems = items
     .filter(item => (item.total_spots - (item.num_of_reservations || 0)) > 0)
+    .filter(item => (item.status == "active"))
     .filter(item =>
       item.information.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.location.toLowerCase().includes(searchTerm.toLowerCase())
@@ -281,6 +332,25 @@ const complete = async (reservation_id) => {
                   </button>
                 </div>
               )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+
+
+      {/* === NOTIFICATIONS === */}
+      <h3 className="text-xl font-semibold mt-10 mb-4">Notifications</h3>
+      {notifications.length === 0 ? (
+        <p>No notifications yet.</p>
+      ) : (
+        <ul className="space-y-2">
+          {notifications.map((note) => (
+            <li key={note.id} className="bg-yellow-100 p-3 rounded-md text-sm shadow">
+              {note.message}
+              <span className="text-gray-500 block text-xs mt-1">
+                {new Date(note.created_at).toLocaleString()}
+              </span>
             </li>
           ))}
         </ul>

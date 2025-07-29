@@ -1,9 +1,9 @@
 #TO DO:
 #CUSTOMER picks up reservation --> completed status (DONE)
-#RESTAURANT gets notified when a reservation is canceled by customer
-#RESTAURANTs can cancel their items
-#CUSTOMERs are notified when an item they've reserved is canceled
-#CUSTOMER's canceled and completed reservations are moved to a different table at end of day
+#RESTAURANT gets notified when a reservation is canceled by customer (DONE)
+#RESTAURANTs can add pictures, items are displayed nicely (DONE?)
+#RESTAURANTs can cancel their items (Done)
+#CUSTOMERs are notified when an item they've reserved is canceled (Done)
+#CUSTOMER's canceled and completed reservations are moved to a different  table at end of day
 #CUSTOMER's who don't pick up are canceled automatically
 #RESTAURANT items past pickup time get moved to a different database (completed items)
-#RESTAURANTs can add pictures, items are displayed nicely

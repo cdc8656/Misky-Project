@@ -62,6 +62,7 @@ class Item(BaseModel):
     pickup_time: str
     total_spots: int  # Number of reservation spots for item
     image_url: Optional[str] = None 
+    status: Optional[str] = "active" #valid statuses: "active", "cancelled", "completed"
 
 class Reservation(BaseModel):
     customer_id: UUID # Supabase customer ID
@@ -456,53 +457,126 @@ def confirm_reservation(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# Get notifications for the authenticated restaurant
+#get notifications for both restaurants and customers
 @app.get("/notifications", response_model=list[Notification])
-def get_notifications(
-    authorization: str = Header(...)
-):
+def get_notifications(authorization: str = Header(...)):
     jwt_token = authorization.replace("Bearer ", "").strip()
     user_id = get_user_id_from_jwt(jwt_token)
     headers = get_auth_headers(jwt_token)
 
     try:
         with httpx.Client() as client:
-            # Correct Supabase query params
-            params = {
-                "restaurant_id": f"eq.{user_id}",
-                "order": "created_at.desc"
-            }
-            response = client.get(
-                f"{SUPABASE_URL}/rest/v1/notifications",
+            # Get the role from the profiles table
+            profile_res = client.get(
+                f"{SUPABASE_URL}/rest/v1/profiles",
+                headers=headers,
+                params={"user_id": f"eq.{user_id}"},
+            )
+            profile_res.raise_for_status()
+            profile_data = profile_res.json()
+
+            if not profile_data:
+                raise HTTPException(status_code=404, detail="Profile not found")
+
+            role = profile_data[0].get("role")
+            if role not in ("restaurant", "customer"):
+                raise HTTPException(status_code=400, detail="Invalid role in profile")
+
+            # Role-specific filters
+            filter_key = "restaurant_id" if role == "restaurant" else "customer_id"
+            params = {filter_key: f"eq.{user_id}"}
+
+            notifs_res = client.get(
+                f"{SUPABASE_URL}/rest/v1/notifications?order=created_at.desc",
                 headers=headers,
                 params=params,
             )
-            response.raise_for_status()
-            return response.json()
+            notifs_res.raise_for_status()
+
+            return notifs_res.json()
+
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Create a notification manually (optional, if needed)
-@app.post("/notifications")
-def create_notification(
-    notification: Notification,
+
+# restaurant can cancel their own items
+@app.patch("/restaurant/items/{item_id}/cancel")
+def cancel_item(
+    item_id: UUID,
     authorization: str = Header(...)
 ):
     jwt_token = authorization.replace("Bearer ", "").strip()
+    restaurant_id = get_user_id_from_jwt(jwt_token)
     headers = get_auth_headers(jwt_token)
-    payload = notification.dict(exclude_unset=True)
+
     try:
         with httpx.Client() as client:
-            response = client.post(
-                f"{SUPABASE_URL}/rest/v1/notifications",
+            # 1. Verify restaurant owns the item
+            item_res = client.get(
+                f"{SUPABASE_URL}/rest/v1/items",
                 headers=headers,
-                json=payload,
+                params={"id": f"eq.{item_id}", "select": "restaurant_id,information"},
             )
-            response.raise_for_status()
-            return response.json()
+            item_res.raise_for_status()
+            item_data = item_res.json()
+            if not item_data:
+                raise HTTPException(status_code=404, detail="Item not found.")
+            if item_data[0]["restaurant_id"] != restaurant_id:
+                raise HTTPException(status_code=403, detail="Not authorized to cancel this item.")
+
+            item_info = item_data[0]["information"]
+
+            # 2. Cancel the item
+            cancel_item_res = client.patch(
+                f"{SUPABASE_URL}/rest/v1/items?id=eq.{item_id}",
+                headers=headers,
+                json={"status": "cancelled"},
+            )
+            cancel_item_res.raise_for_status()
+
+            # 3. Get all active reservations for that item
+            reservation_res = client.get(
+                    f"{SUPABASE_URL}/rest/v1/reservations",
+                    headers=headers,
+                    params={"item_id": f"eq.{item_id}", "status": "eq.active"},
+                )
+            reservation_res.raise_for_status()
+            reservations = reservation_res.json()
+
+            print("Found reservations:", reservations)  # ADD THIS
+
+                # 4. Cancel each reservation + notify customer
+            for resv in reservations:
+                resv_id = resv["id"]
+                customer_id = resv["customer_id"]
+
+                # Cancel reservation and check success
+                cancel_resv_res = client.patch(
+                    f"{SUPABASE_URL}/rest/v1/reservations?id=eq.{resv_id}",
+                    headers=headers,
+                    json={"status": "cancelled"},
+                )
+                print("FUCK PENIS",cancel_resv_res.status_code, cancel_resv_res.text)
+                cancel_resv_res.raise_for_status()
+
+                # Create notification for customer and check success
+                notif_res = client.post(
+                    f"{SUPABASE_URL}/rest/v1/notifications",
+                    headers=headers,
+                    json={
+                        "restaurant_id": restaurant_id,
+                        "reservation_id": str(resv_id),
+                        "type": "cancel",
+                        "message": f"Item '{item_info}' was cancelled by the restaurant.",
+                        "customer_id": customer_id
+                    },
+                )
+                notif_res.raise_for_status()
+
+            return {"success": True, "message": f"Item '{item_info}' cancelled and customers notified."}
+
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:

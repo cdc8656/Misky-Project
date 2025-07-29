@@ -6,6 +6,7 @@ import {
   fetchNotifications,
   uploadItemImage,
   updateRestaurantItemImage,
+  cancelRestaurantItem,
 } from "../api.js";
 
 export default function RestaurantDashboard({ user }) {
@@ -109,6 +110,7 @@ export default function RestaurantDashboard({ user }) {
       pickup_time: form.pickup_time,
       total_spots: parseInt(form.total_spots, 10),
       price: parseFloat(form.price),
+      status: "active"
     };
 
     try {
@@ -157,6 +159,25 @@ export default function RestaurantDashboard({ user }) {
       setLoading(false);
     }
   };
+
+  // Item canceling handler
+  const handleCancel = async (itemId) => {
+    if (!window.confirm("Are you sure you want to cancel this offer?")) return;
+
+    try {
+      setLoading(true);
+      await cancelRestaurantItem(supabase, itemId); // ← Your API logic
+      await loadItems(); // refresh after cancel
+    } catch (err) {
+      console.error("Failed to cancel item:", err);
+      alert("Failed to cancel item: " + (err.message || "Unknown error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -301,7 +322,18 @@ export default function RestaurantDashboard({ user }) {
                 <p style={{ margin: "0.25rem 0" }}>
                   <strong>Location:</strong> {item.location}
                 </p>
-                {/* You can add buttons here if needed */}
+                <p style={{ margin: "0.25rem 0" }}>
+                  <strong>Status:</strong> {item.status}
+                </p>
+                {/* Buttons */}
+                {item.status === "active" && (
+                  <button
+                    onClick={() => handleCancel(item.id)}
+                    className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    Cancel Offer
+                  </button>
+              )}
               </div>
             </div>
           ))}

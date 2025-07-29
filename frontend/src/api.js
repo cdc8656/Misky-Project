@@ -1,6 +1,6 @@
 import axios from "axios"; //alows for HTTP requests to be made to FastAPI backend.
 
-export const API_BASE_URL = "https://misky-project.onrender.com";
+export const API_BASE_URL = "https://misky-project.onrender.com"; //base URL of FastAPI backend
 //"http://localhost:8000"; //Local testing
 //"https://misky-project.onrender.com"; //base URL of FastAPI backend
 
@@ -170,6 +170,30 @@ export const createRestaurantItem = async (supabase, itemData) => {
   }
 };
 
+// Cancel a restaurant item
+export const cancelRestaurantItem = async (supabase, itemId) => {
+  const token = await getAccessToken(supabase);
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    const res = await axios.patch(
+      `${API_BASE_URL}/restaurant/items/${itemId}/cancel`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error canceling restaurant item:", err);
+    throw new Error(err.response?.data?.detail || "Failed to cancel item");
+  }
+};
+
+
 // Upload an image to Supabase Storage and return its public URL
 export const uploadItemImage = async (supabase, file, itemId) => {
   if (!file) throw new Error("No file provided");
@@ -215,7 +239,7 @@ export const updateRestaurantItemImage = async (itemId, imageUrl, supabase) => {
   }
 };
 
-// Fetch notifications for the logged-in restaurant
+// Fetch notifications for the logged-in user (restaurant or customer)
 export const fetchNotifications = async (supabase) => {
   const token = await getAccessToken(supabase);
   if (!token) throw new Error("Not authenticated");
