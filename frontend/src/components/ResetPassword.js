@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 function getHashParams() {
-  const hash = window.location.hash.substring(1); // remove #
+  const hash = window.location.hash.substring(1); // remove leading #
   const params = new URLSearchParams(hash);
   return Object.fromEntries(params.entries());
 }
@@ -14,14 +14,20 @@ export default function ResetPassword({ supabase }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
   const [accessToken, setAccessToken] = useState(null);
+  const [refreshToken, setRefreshToken] = useState(null);
 
   useEffect(() => {
     const params = getHashParams();
-    if (params.access_token) {
-      setAccessToken(params.access_token);
+    const at = params.access_token;
+    const rt = params.refresh_token;
+
+    if (at && rt) {
+      setAccessToken(at);
+      setRefreshToken(rt);
     } else {
-      setErrorMsg("Invalid or missing access token.");
+      setErrorMsg("Missing access or refresh token in URL.");
     }
   }, []);
 
@@ -38,9 +44,10 @@ export default function ResetPassword({ supabase }) {
     }
 
     try {
-      // Set the session with the access token from the URL
+      // ✅ Set session using both tokens
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
+        refresh_token: refreshToken,
       });
 
       if (sessionError) {
@@ -49,7 +56,7 @@ export default function ResetPassword({ supabase }) {
         return;
       }
 
-      // Now update the user's password
+      // ✅ Now update the user's password
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -60,8 +67,8 @@ export default function ResetPassword({ supabase }) {
         setSuccessMsg("Password successfully reset! You can now log in.");
       }
     } catch (err) {
-      setErrorMsg("Unexpected error during password reset.");
       console.error(err);
+      setErrorMsg("Unexpected error during password reset.");
     } finally {
       setLoading(false);
     }
@@ -80,11 +87,7 @@ export default function ResetPassword({ supabase }) {
         </p>
       )}
 
-      {!successMsg && !errorMsg && !accessToken && (
-        <p>Invalid or expired password reset link.</p>
-      )}
-
-      {!successMsg && accessToken && (
+      {!successMsg && accessToken && refreshToken && (
         <form onSubmit={handleResetPassword}>
           <label htmlFor="new-password">
             New Password:
