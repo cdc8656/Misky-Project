@@ -284,20 +284,17 @@ return (
         Search for Offers
       </h2>
     {/* Search input */}
-    <div className="fixed left-0 right-0 px-4 sm:px-8 bg-[#B2B0E8] z-10">
       <input
         type="text"
         placeholder="Search food or restaurant location..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="w-full mb-6 rounded border border-gray-300 text-left"
-        style={{
-          padding: "12px 16px",
-          fontSize: "1.125rem",
-          boxSizing: "border-box",
-        }}
+          style={{
+            width: '99%',
+            padding: '0.6%',
+            boxSizing: 'border-box',  // important to include padding inside width
+          }}
       />
-    </div>
 
     {/* === AVAILABLE FOOD OFFERS === */}
     <h3
