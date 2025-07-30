@@ -284,19 +284,20 @@ return (
         Search for Offers
       </h2>
     {/* Search input */}
-    <input
-      type="text"
-      placeholder="Search food or restaurant location..."
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      className="w-full mb-6 rounded border border-gray-300 text-left"
-      style={{
-        padding: "12px 16px",
-        fontSize: "1.125rem",
-        maxWidth: "100vw", // prevents it from going wider than screen
-        boxSizing: "border-box" // ensures padding doesn't overflow
-      }}
-    />
+    <div className="w-screen px-4 sm:px-8">
+      <input
+        type="text"
+        placeholder="Search food or restaurant location..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="w-full mb-6 rounded border border-gray-300 text-left"
+        style={{
+          padding: "12px 16px",
+          fontSize: "1.125rem",
+          boxSizing: "border-box"
+        }}
+      />
+    </div>
 
     {/* === AVAILABLE FOOD OFFERS === */}
     <h3
