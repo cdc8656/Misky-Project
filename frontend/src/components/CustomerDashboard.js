@@ -289,8 +289,13 @@ return (
       placeholder="Search food or restaurant location..."
       value={searchTerm}
       onChange={(e) => setSearchTerm(e.target.value)}
-      className="mb-6 rounded border border-gray-300 w-full max-w-8xl mx-auto block text-left"
-      style={{ width: "800px", padding: "12px 16px", fontSize: "1.125rem", textAlign: "left" }}
+      className="w-full mb-6 rounded border border-gray-300 text-left"
+      style={{
+        padding: "12px 16px",
+        fontSize: "1.125rem",
+        maxWidth: "100vw", // prevents it from going wider than screen
+        boxSizing: "border-box" // ensures padding doesn't overflow
+      }}
     />
 
     {/* === AVAILABLE FOOD OFFERS === */}
