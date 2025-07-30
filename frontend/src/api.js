@@ -233,6 +233,29 @@ export const cancelRestaurantItem = async (supabase, itemId) => {
   }
 };
 
+// Complete a restaurant item
+export const completeRestaurantItem = async (supabase, itemId) => {
+  const token = await getAccessToken(supabase);
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    const res = await axios.patch(
+      `${API_BASE_URL}/restaurant/items/${itemId}/complete`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error completing restaurant item:", err);
+    throw new Error(err.response?.data?.detail || "Failed to complete item");
+  }
+};
+
 
 // Upload an image to Supabase Storage and return its public URL
 export const uploadItemImage = async (supabase, file, itemId) => {

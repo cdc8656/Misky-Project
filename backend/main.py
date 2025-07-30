@@ -581,6 +581,89 @@ def cancel_item(
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+# restaurant can complete their own items
+@app.patch("/restaurant/items/{item_id}/complete")
+def cancel_item(
+    item_id: UUID,
+    authorization: str = Header(...)
+):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    restaurant_id = get_user_id_from_jwt(jwt_token)
+    headers = get_auth_headers(jwt_token)
+
+    try:
+        with httpx.Client() as client:
+            # 1. Verify restaurant owns the item
+            item_res = client.get(
+                f"{SUPABASE_URL}/rest/v1/items",
+                headers=headers,
+                params={"id": f"eq.{item_id}", "select": "restaurant_id,information"},
+            )
+            item_res.raise_for_status()
+            item_data = item_res.json()
+            if not item_data:
+                raise HTTPException(status_code=404, detail="Item not found.")
+            if item_data[0]["restaurant_id"] != restaurant_id:
+                raise HTTPException(status_code=403, detail="Not authorized to complete this item.")
+
+            item_info = item_data[0]["information"]
+
+            # 2. Cancel the item
+            cancel_item_res = client.patch(
+                f"{SUPABASE_URL}/rest/v1/items?id=eq.{item_id}",
+                headers=headers,
+                json={"status": "completed"},
+            )
+            cancel_item_res.raise_for_status()
+
+            # 3. Get all active reservations for that item
+            reservation_res = client.get(
+                    f"{SUPABASE_URL}/rest/v1/reservations",
+                    headers=headers,
+                    params={"item_id": f"eq.{item_id}", "status": "eq.active"},
+                )
+            reservation_res.raise_for_status()
+            reservations = reservation_res.json()
+
+            print("Found reservations:", reservations)  # ADD THIS
+
+                # 4. Complete each reservation + notify customer
+            for resv in reservations:
+                resv_id = resv["id"]
+                customer_id = resv["customer_id"]
+
+                # Complete reservation and check success
+                cancel_resv_res = client.patch(
+                    f"{SUPABASE_URL}/rest/v1/reservations?id=eq.{resv_id}",
+                    headers=headers,
+                    json={"status": "completed"},
+                )
+                print(cancel_resv_res.status_code, cancel_resv_res.text)
+                cancel_resv_res.raise_for_status()
+
+                # Create notification for customer and check success
+                notif_res = client.post(
+                    f"{SUPABASE_URL}/rest/v1/notifications",
+                    headers=headers,
+                    json={
+                        "restaurant_id": restaurant_id,
+                        "reservation_id": str(resv_id),
+                        "type": "confirm",
+                        "message": f"Item '{item_info}' was completed by the restaurant.",
+                        "customer_id": customer_id
+                    },
+                )
+                notif_res.raise_for_status()
+
+            return {"success": True, "message": f"Item '{item_info}' completed and customers notified."}
+
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # user gets their profile
 @app.get("/profile")

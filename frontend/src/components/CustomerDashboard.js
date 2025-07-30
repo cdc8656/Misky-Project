@@ -277,7 +277,7 @@ const complete = async (reservation_id) => {
                       <strong>Pickup:</strong> {new Date(item.pickup_time).toLocaleString()}
                     </p>
                     <p style={{ margin: "0.25rem 0" }}>
-                      <strong>Price:</strong> ${item.price.toFixed(2)} &nbsp;&nbsp;
+                      <strong>Price:</strong> <b>S/.</b>{item.price.toFixed(2)} &nbsp;&nbsp;
                       <strong>Spots left:</strong> {item.total_spots - (item.num_of_reservations || 0)}
                     </p>
                     <p style={{ margin: "0.25rem 0" }}>
@@ -309,7 +309,7 @@ const complete = async (reservation_id) => {
                 {new Date(r.item.pickup_time).toLocaleString()}
               </p>
               <p className="text-gray-700 mb-1">
-                <span className="font-semibold">Price:</span> ${r.item.price.toFixed(2)}
+                <span className="font-semibold">Price:</span> <b>S/.</b>{r.item.price.toFixed(2)}
               </p>
               <p className="text-gray-700 mb-1">
                 <span className="font-semibold">Location:</span> {r.item.location}

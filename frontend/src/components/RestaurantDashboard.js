@@ -8,14 +8,15 @@ import {
   uploadItemImage,
   updateRestaurantItemImage,
   cancelRestaurantItem,
+  completeRestaurantItem,
 } from "../api.js";
 
 export default function RestaurantDashboard({ user }) {
   const [form, setForm] = useState({
     information: "",
     pickup_time: "",
-    total_spots: 1,
-    price: 0,
+    total_spots: "",
+    price: "",
     image: null,
   });
 
@@ -167,7 +168,7 @@ export default function RestaurantDashboard({ user }) {
 
     try {
       setLoading(true);
-      await cancelRestaurantItem(supabase, itemId); // ← Your API logic
+      await cancelRestaurantItem(supabase, itemId);
       await loadItems(); // refresh after cancel
     } catch (err) {
       console.error("Failed to cancel item:", err);
@@ -177,6 +178,21 @@ export default function RestaurantDashboard({ user }) {
     }
   };
 
+  // Item complete handler
+  const handleComplete = async (itemId) => {
+    if (!window.confirm("Are you sure you want to complete this offer?")) return;
+
+    try {
+      setLoading(true);
+      await completeRestaurantItem(supabase, itemId);
+      await loadItems(); // refresh after cancel
+    } catch (err) {
+      console.error("Failed to complete item:", err);
+      alert("Failed to complete item: " + (err.message || "Unknown error"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
 
@@ -321,7 +337,7 @@ export default function RestaurantDashboard({ user }) {
                   <strong>Pickup:</strong> {new Date(item.pickup_time).toLocaleString()}
                 </p>
                 <p style={{ margin: "0.25rem 0" }}>
-                  <strong>Price:</strong> ${item.price.toFixed(2)} &nbsp;&nbsp;
+                  <strong>Price:</strong> <b>S/.</b>{item.price.toFixed(2)} &nbsp;&nbsp;
                   <strong>Spots left:</strong> {item.total_spots - (item.num_of_reservations || 0)}
                 </p>
                 <p style={{ margin: "0.25rem 0" }}>
@@ -337,6 +353,14 @@ export default function RestaurantDashboard({ user }) {
                     className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                   >
                     Cancel Offer
+                  </button>
+              )}
+              {item.status === "active" && (
+                  <button
+                    onClick={() => handleComplete(item.id)}
+                    className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    Complete Offer
                   </button>
               )}
               </div>
