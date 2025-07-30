@@ -24,6 +24,8 @@ export default function RestaurantDashboard({ user }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showOffers, setShowOffers] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(true);
 
   const loadItems = async () => {
     if (!user?.id) {
@@ -196,178 +198,289 @@ export default function RestaurantDashboard({ user }) {
 
 
 
-  return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
-      <h2 className="text-2xl font-bold mb-4">Restaurant Dashboard
-        <Link to="/profile" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+return (
+<div
+  style={{ backgroundColor: "#B2B0E8", minHeight: "100vh", paddingBottom: "40px" }}
+  className="max-w-5xl mx-auto px-4 py-6"
+>
+  {/* Header Section with Logo, Title, and Profile Button */}
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "20px 0",
+    }}
+      >
+        {/* Logo */}
+        <img
+          src="/Misky Logo.png"
+          alt="Misky Logo"
+          style={{ width: "75px", height: "auto" }}
+        />
+
+        {/* Title */}
+        <h2
+          className="text-2xl font-bold"
+          style={{
+            color: "#1A2A80",
+            flexGrow: 1,
+            textAlign: "center",
+            margin: 0,
+          }}
+        >
+          Restaurant Dashboard
+        </h2>
+
+        {/* Profile Button */}
+        <Link
+          to="/profile"
+          style={{
+            backgroundColor: "#3B38A0",
+            color: "#FFFFFF",
+            padding: "8px 16px",
+            borderRadius: "5px",
+            textDecoration: "none",
+            marginLeft: "auto",
+          }}
+          onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
+          onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
+        >
           Profile
         </Link>
-      </h2>
+      </div>
 
       {/* Notifications */}
       <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-3">Notifications</h3>
-        {notifications.length === 0 ? (
-          <p>No notifications yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {notifications.map((note) => (
-              <li key={note.id} className="text-gray-700">
-                {note.message} —{" "}
-                <span className="text-gray-500 text-sm">
-                  {new Date(note.created_at).toLocaleString()}
-                </span>
-              </li>
-            ))}
-          </ul>
+        <h3
+          className="text-xl font-semibold mt-10 mb-4 cursor-pointer"
+          style={{ color: "#1A2A80" }}
+          onClick={() => setShowNotifications(!showNotifications)}
+        >
+          {showNotifications ? "▼ " : "▶ "}Notifications
+        </h3>
+        {showNotifications && (
+          <>
+            {notifications.length === 0 ? (
+              <p>No notifications yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {notifications.map((note) => (
+                  <li key={note.id} className="text-gray-700">
+                    {note.message} —{" "}
+                    <span className="text-gray-500 text-sm">
+                      {new Date(note.created_at).toLocaleString()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </div>
 
       {/* Item Creation Form */}
-      <form onSubmit={handleSubmit} className="mb-10 space-y-4 max-w-md">
-        <input
-          name="information"
-          placeholder="Info"
-          value={form.information}
-          onChange={handleChange}
-          required
-          className="w-full p-2 border border-gray-300 rounded"
-        />
-        <input
-          name="pickup_time"
-          type="datetime-local"
-          placeholder="Pick Up Time"
-          value={form.pickup_time}
-          onChange={handleChange}
-          required
-          className="w-full p-2 border border-gray-300 rounded"
-        />
-        <input
-          name="total_spots"
-          type="number"
-          min="1"
-          placeholder="Number of Servings"
-          value={form.total_spots}
-          onChange={handleChange}
-          required
-          className="w-full p-2 border border-gray-300 rounded"
-        />
-        <input
-          name="price"
-          type="number"
-          step="0.01"
-          placeholder="Price"
-          value={form.price}
-          onChange={handleChange}
-          required
-          className="w-full p-2 border border-gray-300 rounded"
-        />
-        <input
-          type="file"
-          name="image"
-          accept="image/*"
-          onChange={handleChange}
-          className="w-full"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? "Submitting..." : "Create Offer"}
-        </button>
-      </form>
+      <div className="mb-8">
+        <h3 className="text-xl font-semibold mb-3" style={{ color: "#1A2A80" }}>
+          Item Creation Form
+        </h3>
+        <form onSubmit={handleSubmit} className="mb-10 space-y-4 max-w-md">
+          <input
+            name="information"
+            placeholder="Info"
+            value={form.information}
+            onChange={handleChange}
+            required
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+          <input
+            name="pickup_time"
+            type="datetime-local"
+            placeholder="Pick Up Time"
+            value={form.pickup_time}
+            onChange={handleChange}
+            required
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+          <input
+            name="total_spots"
+            type="number"
+            min="1"
+            placeholder="Number of Servings"
+            value={form.total_spots}
+            onChange={handleChange}
+            required
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+          <input
+            name="price"
+            type="number"
+            step="0.01"
+            placeholder="Price"
+            value={form.price}
+            onChange={handleChange}
+            required
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+          <input
+            type="file"
+            name="image"
+            accept="image/*"
+            onChange={handleChange}
+            className="w-full"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
+            style={{
+              backgroundColor: "#3B38A0",
+              color: "#fff",
+              border: "none",
+              padding: "6px 12px",
+              borderRadius: "4px",
+              cursor: "pointer",
+              transition: "background-color 0.3s ease",
+              minWidth: "80px",
+              opacity: loading ? 0.5 : 1,
+            }}
+          >
+            {loading ? "Submitting..." : "Create Offer"}
+          </button>
+        </form>
+      </div>
 
       {/* Current Offers */}
-      <h3 className="text-xl font-semibold mb-4">Your Current Offers</h3>
-              {loading && <p>Loading offers…</p>}
-              {error && <p className="text-red-600 mb-4">Error: {error}</p>}
-              {!loading && !error && items.length === 0 && <p>No offers found.</p>}
+      <h3
+        className="text-xl font-semibold mb-4 cursor-pointer"
+        style={{ color: "#1A2A80" }}
+        onClick={() => setShowOffers(!showOffers)}
+      >
+        {showOffers ? "▼ " : "▶ "} Your Current Food Offers
+      </h3>
 
-        <div style={{ display: "grid", gap: "1rem" }}>
-          {items.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                border: "1px solid #ccc",
-                borderRadius: "8px",
-                padding: "1rem",
-                boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                display: "flex",
-                gap: "1rem",
-                alignItems: "center",
-              }}
-            >
-              {/* Image on the left */}
-              {item.image_url ? (
-                <img
-                  src={item.image_url}
-                  alt={item.information}
-                  style={{
-                    width: "100px",
-                    height: "100px",
-                    objectFit: "cover",
-                    borderRadius: "8px",
-                    flexShrink: 0,
-                  }}
-                />
-              ) : (
+      {showOffers && (
+        <>
+          {loading && <p>Loading offers…</p>}
+          {error && <p className="text-red-600 mb-4">Error: {error}</p>}
+          {!loading && !error && items.length === 0 && <p>No offers found.</p>}
+
+          {!loading && !error && items.length > 0 && (
+            <div className="grid gap-4">
+              {items.map((item) => (
                 <div
+                  key={item.id}
                   style={{
-                    width: "100px",
-                    height: "100px",
-                    backgroundColor: "#e2e8f0", // light gray
+                    border: "2px solid #3B38A0",
                     borderRadius: "8px",
+                    padding: "1rem",
+                    backgroundColor: "#FFFFFF",
                     display: "flex",
+                    gap: "1rem",
                     alignItems: "center",
-                    justifyContent: "center",
-                    color: "#9ca3af", // gray text
-                    fontSize: "0.875rem",
-                    flexShrink: 0,
+                    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
                   }}
                 >
-                  No Image
+                  {/* Image */}
+                  {item.image_url ? (
+                    <img
+                      src={item.image_url}
+                      alt={item.information}
+                      style={{
+                        width: "100px",
+                        height: "100px",
+                        objectFit: "cover",
+                        borderRadius: "8px",
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "100px",
+                        height: "100px",
+                        backgroundColor: "#e2e8f0",
+                        borderRadius: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#9ca3af",
+                        fontSize: "0.875rem",
+                        flexShrink: 0,
+                      }}
+                    >
+                      No Image
+                    </div>
+                  )}
+
+                  {/* Details */}
+                  <div style={{ color: "#1A2A80", flex: 1 }}>
+                    <h4 style={{ margin: "0 0 0.5rem" }}>{item.information}</h4>
+                    <p style={{ margin: "0.25rem 0" }}>
+                      <strong>Pickup:</strong> {new Date(item.pickup_time).toLocaleString()}
+                    </p>
+                    <p style={{ margin: "0.25rem 0" }}>
+                      <strong>Price:</strong> <b>S/.</b>{item.price.toFixed(2)} &nbsp;&nbsp;
+                      <strong>Spots left:</strong>{" "}
+                      {item.total_spots - (item.num_of_reservations || 0)}
+                    </p>
+                    <p style={{ margin: "0.25rem 0" }}>
+                      <strong>Location:</strong> {item.location}
+                    </p>
+                    <p style={{ margin: "0.25rem 0" }}>
+                      <strong>Status:</strong> {item.status}
+                    </p>
+
+                    {/* Action Buttons */}
+                    {item.status === "active" && (
+                      <div className="flex" style={{ marginTop: "0.5rem" }}>
+                        <button
+                          disabled={loading}
+                          onClick={() => handleCancel(item.id)}
+                          style={{
+                            backgroundColor: "#DC2626",
+                            color: "#fff",
+                            border: "none",
+                            padding: "6px 12px",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            transition: "background-color 0.3s ease",
+                            marginRight: "12px",
+                            minWidth: "80px",
+                          }}
+                          onMouseOver={(e) => (e.target.style.backgroundColor = "#B22222")}
+                          onMouseOut={(e) => (e.target.style.backgroundColor = "#DC2626")}
+                        >
+                          Cancel Offer
+                        </button>
+                        <button
+                          disabled={loading}
+                          onClick={() => handleComplete(item.id)}
+                          style={{
+                            backgroundColor: "#3B38A0",
+                            color: "#fff",
+                            border: "none",
+                            padding: "6px 12px",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            transition: "background-color 0.3s ease",
+                            minWidth: "80px",
+                          }}
+                          onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
+                          onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
+                        >
+                          Complete Offer
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-
-              {/* Item details on the right */}
-              <div>
-                <h4 style={{ margin: "0 0 0.5rem" }}>{item.information}</h4>
-                <p style={{ margin: "0.25rem 0" }}>
-                  <strong>Pickup:</strong> {new Date(item.pickup_time).toLocaleString()}
-                </p>
-                <p style={{ margin: "0.25rem 0" }}>
-                  <strong>Price:</strong> <b>S/.</b>{item.price.toFixed(2)} &nbsp;&nbsp;
-                  <strong>Spots left:</strong> {item.total_spots - (item.num_of_reservations || 0)}
-                </p>
-                <p style={{ margin: "0.25rem 0" }}>
-                  <strong>Location:</strong> {item.location}
-                </p>
-                <p style={{ margin: "0.25rem 0" }}>
-                  <strong>Status:</strong> {item.status}
-                </p>
-                {/* Buttons */}
-                {item.status === "active" && (
-                  <button
-                    onClick={() => handleCancel(item.id)}
-                    className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    Cancel Offer
-                  </button>
-              )}
-              {item.status === "active" && (
-                  <button
-                    onClick={() => handleComplete(item.id)}
-                    className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    Complete Offer
-                  </button>
-              )}
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-
+          )}
+        </>
+      )}
     </div>
   );
 }

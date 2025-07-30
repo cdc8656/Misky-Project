@@ -140,10 +140,13 @@ export default function App() {
 
       {/* Show logout button when logged in */}
       {user && (
-        <div style={{ position: "fixed", top: 10, right: 20 }}>
-          <button onClick={handleLogout}>Logout</button>
+        <div className="logout-container">
+          <button className="primary-button" onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       )}
+
     </Router>
   );
 }

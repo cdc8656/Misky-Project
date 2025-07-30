@@ -10,3 +10,4 @@
 #CUSTOMER's canceled and completed reservations are moved to a different  table at end of day
 #CUSTOMER's who don't pick up are canceled automatically
 #RESTAURANT items past pickup time get moved to a different database (completed items)
+#Changing a RESTAURANT's location does not update the item table, only the profile table

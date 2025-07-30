@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // import useNavigate
+import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 import {
   fetchUserProfile,
   updateUserProfile,
-  changeUserCredentials,
 } from "../api";
 
 export default function ProfilePage() {
-  const navigate = useNavigate(); // initialize navigate
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("info");
   const [profile, setProfile] = useState({});
   const [form, setForm] = useState({});
@@ -25,7 +24,6 @@ export default function ProfilePage() {
       setForm(data);
     } catch (err) {
       setMessage(err.message || "Failed to load profile.");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -44,7 +42,6 @@ export default function ProfilePage() {
       setMessage("Profile updated!");
     } catch (err) {
       setMessage(err.message || "Failed to update profile.");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -54,149 +51,197 @@ export default function ProfilePage() {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-
     try {
-        if (credForm.email) {
-        // Update email directly with Supabase
+      if (credForm.email) {
         const { error: emailError } = await supabase.auth.updateUser({
-            email: credForm.email,
+          email: credForm.email,
         });
         if (emailError) throw emailError;
-        }
-
-        if (credForm.password) {
-        // Update password directly with Supabase
+      }
+      if (credForm.password) {
         const { error: passwordError } = await supabase.auth.updateUser({
-            password: credForm.password,
+          password: credForm.password,
         });
         if (passwordError) throw passwordError;
-        }
-
-        setMessage("Email/password updated!");
+      }
+      setMessage("Email/password updated!");
     } catch (err) {
-        setMessage(err.message || "Failed to update credentials.");
-        console.error(err);
+      setMessage(err.message || "Failed to update credentials.");
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-    };
+  };
+
+  const inputStyle = {
+    width: "100%",
+    padding: "8px",
+    marginTop: "4px",
+    marginBottom: "12px",
+    borderRadius: "4px",
+    border: "1px solid #ccc",
+    fontSize: "14px",
+  };
+
+  const labelStyle = {
+    display: "block",
+    color: "#1A2A80",
+    marginBottom: "6px",
+  };
+
+  const buttonStyle = {
+    backgroundColor: "#3B38A0",
+    color: "white",
+    border: "none",
+    padding: "10px 16px",
+    borderRadius: "5px",
+    cursor: "pointer",
+    width: "100%",
+    marginTop: "12px",
+  };
 
   return (
-    <div className="max-w-xl mx-auto p-6">
-      {/* Back button */}
-      <button
-        onClick={() => navigate("/dashboard")}
-        className="mb-4 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+    <div
+      style={{
+        backgroundColor: "#B2B0E8",
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "white",
+          padding: "2rem",
+          borderRadius: "10px",
+          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+          width: "100%",
+          maxWidth: "450px",
+        }}
       >
-        ← Back to Dashboard
-      </button>
-
-      <h1 className="text-2xl font-bold mb-4">Your Profile</h1>
-
-      <div className="flex mb-4 space-x-4">
         <button
-          className={`px-4 py-2 rounded ${
-            activeTab === "info" ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-          onClick={() => setActiveTab("info")}
+          onClick={() => navigate("/dashboard")}
+          disabled={loading}
+          style={{
+            ...buttonStyle,
+            backgroundColor: "#ccc",
+            color: "#333",
+            marginBottom: "1rem",
+          }}
         >
-          Profile Info
+          ← Back to Dashboard
         </button>
-        <button
-          className={`px-4 py-2 rounded ${
-            activeTab === "credentials"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200"
-          }`}
-          onClick={() => setActiveTab("credentials")}
-        >
-          Change Email/Password
-        </button>
-      </div>
 
-      {message && <p className="mb-4 text-red-500">{message}</p>}
+        <h2 style={{ color: "#1A2A80", textAlign: "center", marginBottom: "1rem" }}>
+          Your Profile
+        </h2>
 
-      {activeTab === "info" && (
-        <form onSubmit={handleProfileChange} className="space-y-4">
-          <div>
-            <label className="block">Name</label>
+        <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
+          <button
+            onClick={() => setActiveTab("info")}
+            style={{
+              ...buttonStyle,
+              backgroundColor: activeTab === "info" ? "#3B38A0" : "#ddd",
+              color: activeTab === "info" ? "#fff" : "#333",
+            }}
+          >
+            Profile Info
+          </button>
+          <button
+            onClick={() => setActiveTab("credentials")}
+            style={{
+              ...buttonStyle,
+              backgroundColor: activeTab === "credentials" ? "#3B38A0" : "#ddd",
+              color: activeTab === "credentials" ? "#fff" : "#333",
+            }}
+          >
+            Change Email/Password
+          </button>
+        </div>
+
+        {message && (
+          <p
+            style={{
+              textAlign: "center",
+              color: message.toLowerCase().includes("failed") ? "red" : "green",
+              marginBottom: "1rem",
+            }}
+          >
+            {message}
+          </p>
+        )}
+
+        {activeTab === "info" && (
+          <form onSubmit={handleProfileChange}>
+            <label style={labelStyle}>Name</label>
             <input
               type="text"
               value={form.name || ""}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full border px-3 py-2"
+              style={inputStyle}
             />
-          </div>
-          <div>
-            <label className="block">Location</label>
+
+            <label style={labelStyle}>Location</label>
             <input
               type="text"
               value={form.location || ""}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
-              className="w-full border px-3 py-2"
+              style={inputStyle}
             />
-          </div>
-          <div>
-            <label className="block">Contact</label>
+
+            <label style={labelStyle}>Contact</label>
             <input
               type="text"
               value={form.contact || ""}
               onChange={(e) => setForm({ ...form, contact: e.target.value })}
-              className="w-full border px-3 py-2"
+              style={inputStyle}
             />
-          </div>
-          <div>
-            <label className="block">Profile Picture URL</label>
+
+            <label style={labelStyle}>Profile Picture URL</label>
             <input
               type="text"
               value={form.profile_picture || ""}
               onChange={(e) =>
                 setForm({ ...form, profile_picture: e.target.value })
               }
-              className="w-full border px-3 py-2"
+              style={inputStyle}
             />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-green-600 text-white px-4 py-2 rounded"
-          >
-            {loading ? "Updating..." : "Update Info"}
-          </button>
-        </form>
-      )}
 
-      {activeTab === "credentials" && (
-        <form onSubmit={handleCredentialChange} className="space-y-4">
-          <div>
-            <label className="block">New Email</label>
+            <button type="submit" disabled={loading} style={buttonStyle}>
+              {loading ? "Updating..." : "Update Info"}
+            </button>
+          </form>
+        )}
+
+        {activeTab === "credentials" && (
+          <form onSubmit={handleCredentialChange}>
+            <label style={labelStyle}>New Email</label>
             <input
               type="email"
               value={credForm.email}
-              onChange={(e) => setCredForm({ ...credForm, email: e.target.value })}
-              className="w-full border px-3 py-2"
+              onChange={(e) =>
+                setCredForm({ ...credForm, email: e.target.value })
+              }
+              style={inputStyle}
             />
-          </div>
-          <div>
-            <label className="block">New Password</label>
+
+            <label style={labelStyle}>New Password</label>
             <input
               type="password"
               value={credForm.password}
               onChange={(e) =>
                 setCredForm({ ...credForm, password: e.target.value })
               }
-              className="w-full border px-3 py-2"
+              style={inputStyle}
             />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-yellow-600 text-white px-4 py-2 rounded"
-          >
-            {loading ? "Updating..." : "Change Credentials"}
-          </button>
-        </form>
-      )}
+
+            <button type="submit" disabled={loading} style={buttonStyle}>
+              {loading ? "Updating..." : "Change Credentials"}
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

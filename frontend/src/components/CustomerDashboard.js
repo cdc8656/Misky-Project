@@ -20,6 +20,9 @@ export default function CustomerDashboard({ user }) { //main react component
   const [loading, setLoading] = useState(false); //loading tracks if app is currently fetching data
   const [error, setError] = useState(""); //error messaging if error encountered during processes
   const [searchTerm, setSearchTerm] = useState(""); //search terms
+  const [showOffers, setShowOffers] = useState(true);
+  const [showReservations, setShowReservations] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(true);
 
   // Load available items from backend
   const loadItems = async () => {
@@ -216,151 +219,282 @@ const complete = async (reservation_id) => {
 
 
 // UI/HTML Portion
-  return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
-      <h2 className="text-2xl font-bold mb-4">Customer Dashboard
-        <Link to="/profile" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Profile
-        </Link>
+return (
+  <div style={{ backgroundColor: "#B2B0E8", minHeight: "100vh", paddingBottom: "40px" }} className="max-w-5xl mx-auto px-4 py-6">
+
+  {/* Header Section with Logo, Title, and Profile Button */}
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "20px 0",
+    }}
+  >
+    {/* Logo */}
+    <img
+      src="/Misky Logo.png"
+      alt="Misky Logo"
+      style={{ width: "75px", height: "auto" }}
+    />
+
+    {/* Title */}
+    <h2
+      className="text-2xl font-bold"
+      style={{
+        color: "#1A2A80",
+        flexGrow: 1,
+        textAlign: "center",
+        margin: 0,
+      }}
+    >
+      Customer Dashboard
+    </h2>
+
+    {/* Profile Button */}
+    <Link
+      to="/profile"
+      style={{
+        backgroundColor: "#3B38A0",
+        color: "#FFFFFF",
+        padding: "8px 16px",
+        borderRadius: "5px",
+        textDecoration: "none",
+        marginLeft: "auto",
+      }}
+      onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
+      onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
+    >
+      Profile
+    </Link>
+  </div>
+
+    {error && <p className="text-red-500">{error}</p>}
+    {loading && <p>Processing reservation…</p>}
+    {/* Search Section */}
+      <h2
+        className="text-2xl font-bold"
+        style={{
+          color: "#1A2A80",
+          flexGrow: 1,
+          textAlign: "Left",
+          margin: 0,
+        }}
+      >
+        Search for Offers
       </h2>
+    {/* Search input */}
+    <input
+      type="text"
+      placeholder="Search food or restaurant location..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="mb-6 rounded border border-gray-300 w-full max-w-8xl mx-auto block text-left"
+      style={{ width: "800px", padding: "12px 16px", fontSize: "1.125rem", textAlign: "left" }}
+    />
 
-      {error && <p className="text-red-500">{error}</p>}
-      {loading && <p>Processing reservation…</p>}
+    {/* === AVAILABLE FOOD OFFERS === */}
+    <h3
+      className="text-xl font-semibold mb-4 cursor-pointer"
+      style={{ color: "#1A2A80" }}
+      onClick={() => setShowOffers(!showOffers)}
+    >
+      {showOffers ? "▼ " : "▶ "}Available Food Offers
+    </h3>
+    {showOffers && (
+      <>
+        {filteredItems.length === 0 ? (
+          <p>No matching food offers at the moment.</p>
+        ) : (
+          <div style={{ display: "grid", gap: "1rem" }}>
+            {filteredItems.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  border: "2px solid #3B38A0",
+                  borderRadius: "8px",
+                  padding: "1rem",
+                  backgroundColor: "#FFFFFF",
+                  display: "flex",
+                  gap: "1rem",
+                  alignItems: "center",
+                  boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                }}
+              >
+                {item.image_url && (
+                  <img
+                    src={item.image_url}
+                    alt={item.information}
+                    style={{
+                      width: "100px",
+                      height: "100px",
+                      objectFit: "cover",
+                      borderRadius: "8px",
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
 
-      {/* Search input */}
-      <input
-        type="text"
-        placeholder="Search food or restaurant location..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="mb-6 p-2 border border-gray-300 rounded w-full"
-      />
+                <div style={{ color: "#1A2A80" }}>
+                  <h4 style={{ margin: "0 0 0.5rem" }}>{item.information}</h4>
+                  <p>
+                    <strong>Pickup:</strong> {new Date(item.pickup_time).toLocaleString()}
+                  </p>
+                  <p>
+                    <strong>Price:</strong> <b>S/.</b>
+                    {item.price.toFixed(2)} &nbsp;&nbsp;
+                    <strong>Spots left:</strong>{" "}
+                    {item.total_spots - (item.num_of_reservations || 0)}
+                  </p>
+                  <p>
+                    <strong>Location:</strong> {item.location}
+                  </p>
+                  <button
+                    disabled={loading}
+                    onClick={() => reserve(item.id)}
+                    style={{
+                      marginTop: "0.5rem",
+                      backgroundColor: "#3B38A0",
+                      color: "#fff",
+                      border: "none",
+                      padding: "6px 12px",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                    onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
+                    onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
+                  >
+                    Reserve
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </>
+    )}
 
-      {/* === AVAILABLE FOOD OFFERS === */}
-      <h3 className="text-xl font-semibold mb-4">Available Food Offers</h3>
-          {filteredItems.length === 0 ? (
-            <p>No matching food offers at the moment.</p>
-          ) : (
-            <div style={{ display: "grid", gap: "1rem" }}>
-              {filteredItems.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    border: "1px solid #ccc",
-                    borderRadius: "8px",
-                    padding: "1rem",
-                    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                    display: "flex",
-                    gap: "1rem",
-                    alignItems: "center",
-                  }}
-                >
-                  {/* Image on the left */}
-                  {item.image_url && (
-                    <img
-                      src={item.image_url}
-                      alt={item.information}
+    {/* === CUSTOMER RESERVATIONS === */}
+    <h3
+      className="text-xl font-semibold mt-10 mb-4 cursor-pointer"
+      style={{ color: "#1A2A80" }}
+      onClick={() => setShowReservations(!showReservations)}
+    >
+      {showReservations ? "▼ " : "▶ "}Your Reservations
+    </h3>
+    {showReservations && (
+      <>
+        {reservations.length === 0 ? (
+          <p>You have no reservations yet.</p>
+        ) : (
+          <ul className="space-y-4">
+            {reservations.map((r) => (
+              <li
+                key={r.id}
+                style={{
+                  backgroundColor: "#fff",
+                  padding: "1rem",
+                  borderRadius: "12px",
+                  border: "2px solid #3B38A0",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+                  color: "#1A2A80",
+                }}
+              >
+                <h4 className="font-semibold text-lg mb-1">{r.item.information}</h4>
+                <p>
+                  <strong>Pickup Time:</strong> {new Date(r.item.pickup_time).toLocaleString()}
+                </p>
+                <p>
+                  <strong>Price:</strong> <b>S/.</b>
+                  {r.item.price.toFixed(2)}
+                </p>
+                <p>
+                  <strong>Location:</strong> {r.item.location}
+                </p>
+                <p className="mb-3">
+                  <strong>Status:</strong> {r.status}
+                </p>
+
+                {r.status === "active" && (
+                  <div className="flex" style={{ marginTop: "0.5rem" }}>
+                    <button
+                      disabled={loading}
+                      onClick={() => cancel(r.id)}
                       style={{
-                        width: "100px",
-                        height: "100px",
-                        objectFit: "cover",
-                        borderRadius: "8px",
-                        flexShrink: 0,
+                        backgroundColor: "#DC2626",
+                        color: "#fff",
+                        border: "none",
+                        padding: "6px 12px",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        transition: "background-color 0.3s ease",
+                        marginRight: "12px",
+                        minWidth: "80px",
                       }}
-                    />
-                  )}
+                      onMouseOver={(e) => (e.target.style.backgroundColor = "#B22222")}
+                      onMouseOut={(e) => (e.target.style.backgroundColor = "#DC2626")}
+                    >
+                      Cancel
+                    </button>
 
-                  {/* Item details on the right */}
-                  <div>
-                    <h4 style={{ margin: "0 0 0.5rem" }}>{item.information}</h4>
-                    <p style={{ margin: "0.25rem 0" }}>
-                      <strong>Pickup:</strong> {new Date(item.pickup_time).toLocaleString()}
-                    </p>
-                    <p style={{ margin: "0.25rem 0" }}>
-                      <strong>Price:</strong> <b>S/.</b>{item.price.toFixed(2)} &nbsp;&nbsp;
-                      <strong>Spots left:</strong> {item.total_spots - (item.num_of_reservations || 0)}
-                    </p>
-                    <p style={{ margin: "0.25rem 0" }}>
-                      <strong>Location:</strong> {item.location}
-                    </p>
-                    <button disabled={loading} onClick={() => reserve(item.id)} style={{ marginTop: "0.5rem" }}>
-                      Reserve
+                    <button
+                      disabled={loading}
+                      onClick={() => complete(r.id)}
+                      style={{
+                        backgroundColor: "#3B38A0",
+                        color: "#fff",
+                        border: "none",
+                        padding: "6px 12px",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        transition: "background-color 0.3s ease",
+                        minWidth: "80px",
+                      }}
+                      onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
+                      onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
+                    >
+                      Complete
                     </button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </>
+    )}
 
-      {/* === CUSTOMER RESERVATIONS === */}
-      <h3 className="text-xl font-semibold mt-10 mb-4">Your Reservations</h3>
-      {reservations.length === 0 ? (
-        <p>You have no reservations yet.</p>
-      ) : (
-        <ul className="space-y-4">
-          {reservations.map((r) => (
-            <li
-              key={r.id}
-              className="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm"
-            >
-              <h4 className="font-semibold text-lg mb-1">{r.item.information}</h4>
-              <p className="text-gray-700 mb-1">
-                <span className="font-semibold">Pickup Time:</span>{" "}
-                {new Date(r.item.pickup_time).toLocaleString()}
-              </p>
-              <p className="text-gray-700 mb-1">
-                <span className="font-semibold">Price:</span> <b>S/.</b>{r.item.price.toFixed(2)}
-              </p>
-              <p className="text-gray-700 mb-1">
-                <span className="font-semibold">Location:</span> {r.item.location}
-              </p>
-              <p className="text-gray-700 mb-3">
-                <span className="font-semibold">Status:</span> {r.status}
-              </p>
-
-              {/* Cancel/Complete buttons */}
-              {r.status === "active" && (
-                <div className="flex space-x-3">
-                  <button
-                    disabled={loading}
-                    onClick={() => cancel(r.id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    disabled={loading}
-                    onClick={() => complete(r.id)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                  >
-                    Complete
-                  </button>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-
-
-
-      {/* === NOTIFICATIONS === */}
-      <h3 className="text-xl font-semibold mt-10 mb-4">Notifications</h3>
-      {notifications.length === 0 ? (
-        <p>No notifications yet.</p>
-      ) : (
-        <ul className="space-y-2">
-          {notifications.map((note) => (
-            <li key={note.id} className="bg-yellow-100 p-3 rounded-md text-sm shadow">
-              {note.message}
-              <span className="text-gray-500 block text-xs mt-1">
-                {new Date(note.created_at).toLocaleString()}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+    {/* === NOTIFICATIONS === */}
+    <h3
+      className="text-xl font-semibold mt-10 mb-4 cursor-pointer"
+      style={{ color: "#1A2A80" }}
+      onClick={() => setShowNotifications(!showNotifications)}
+    >
+      {showNotifications ? "▼ " : "▶ "}Notifications
+    </h3>
+    {showNotifications && (
+      <>
+        {notifications.length === 0 ? (
+          <p>No notifications yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {notifications.map((note) => (
+              <li
+                key={note.id}
+                className="p-3 rounded-md text-sm shadow"
+                style={{ backgroundColor: "#FFF9C4", color: "#1A2A80" }}
+              >
+                {note.message}
+                <span className="text-gray-600 block text-xs mt-1">
+                  {new Date(note.created_at).toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </>
+    )}
+  </div>
+);
 
 }

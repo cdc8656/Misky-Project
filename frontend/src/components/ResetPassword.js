@@ -44,7 +44,6 @@ export default function ResetPassword({ supabase }) {
     }
 
     try {
-      // ✅ Set session using both tokens
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
@@ -56,7 +55,6 @@ export default function ResetPassword({ supabase }) {
         return;
       }
 
-      // ✅ Now update the user's password
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -75,35 +73,85 @@ export default function ResetPassword({ supabase }) {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "2rem auto" }}>
-      <h2>Reset Password</h2>
+    <div
+      style={{
+        maxWidth: "400px",
+        margin: "3rem auto",
+        padding: "2rem",
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+        backgroundColor: "#f9f9f9",
+        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+      }}
+    >
+      <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>Reset Password</h2>
 
-      {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
+      {errorMsg && <p style={{ color: "#DC2626", marginBottom: "1rem" }}>{errorMsg}</p>}
 
       {successMsg && (
-        <p style={{ color: "green" }}>
-          {successMsg}{" "}
-          <button onClick={() => navigate("/login")}>Go to Login</button>
+        <p style={{ color: "green", marginBottom: "1rem" }}>
+          {successMsg}
+          <br />
+          <button
+            onClick={() => navigate("/login")}
+            style={{
+              marginTop: "0.5rem",
+              backgroundColor: "#3B38A0",
+              color: "#fff",
+              border: "none",
+              padding: "6px 12px",
+              borderRadius: "4px",
+              cursor: "pointer",
+              transition: "background-color 0.3s ease",
+              minWidth: "100px",
+            }}
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
+          >
+            Go to Login
+          </button>
         </p>
       )}
 
       {!successMsg && accessToken && refreshToken && (
         <form onSubmit={handleResetPassword}>
-          <label htmlFor="new-password">
+          <label htmlFor="new-password" style={{ display: "block", marginBottom: "0.5rem" }}>
             New Password:
-            <input
-              id="new-password"
-              type="password"
-              required
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              disabled={loading}
-              minLength={6}
-              autoComplete="new-password"
-            />
           </label>
-          <br />
-          <button type="submit" disabled={loading}>
+          <input
+            id="new-password"
+            type="password"
+            required
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            disabled={loading}
+            minLength={6}
+            autoComplete="new-password"
+            style={{
+              width: "100%",
+              padding: "0.5rem",
+              marginBottom: "1rem",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+            }}
+          />
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              backgroundColor: "#3B38A0",
+              color: "#fff",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "4px",
+              cursor: "pointer",
+              transition: "background-color 0.3s ease",
+              minWidth: "120px",
+            }}
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
+          >
             {loading ? "Resetting..." : "Reset Password"}
           </button>
         </form>

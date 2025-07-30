@@ -120,166 +120,229 @@ export default function AuthForm({ type = "login", onAuth, supabase }) {
     }
   };
 
+//UI portion
+
+const inputStyle = {
+  width: "100%",
+  padding: "8px",
+  marginTop: "4px",
+  marginBottom: "12px",
+  borderRadius: "4px",
+  border: "1px solid #ccc",
+  fontSize: "14px",
+};
+
+const buttonStyle = {
+  backgroundColor: "#3B38A0",
+  color: "white",
+  border: "none",
+  padding: "10px 16px",
+  borderRadius: "5px",
+  cursor: "pointer",
+  width: "100%",
+};
+
+const labelStyle = {
+  display: "block",
+  color: "#1A2A80",
+  marginBottom: "6px",
+};
+
   return (
-    <div style={{ maxWidth: 400, margin: "2rem auto" }}>
-      <h2>
-        {isForgotPassword
-          ? "Reset Password"
-          : isLogin
-          ? "Login"
-          : "Sign Up"}
-      </h2>
+    <div
+      style={{
+        backgroundColor: "#B2B0E8",
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "white",
+          padding: "2rem",
+          borderRadius: "10px",
+          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+          width: "100%",
+          maxWidth: "400px",
+        }}
+      >
+        <h2 style={{ color: "#1A2A80", textAlign: "center", marginBottom: "1rem" }}>
+          {isForgotPassword
+            ? "Reset Password"
+            : isLogin
+            ? "Login"
+            : "Sign Up"}
+        </h2>
 
-      {isForgotPassword ? (
-        <form onSubmit={handleForgotPassword}>
-          <label htmlFor="email">
-            Enter your email to reset password:
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-            />
-          </label>
-          <br />
-          <button type="submit" disabled={loading}>
-            {loading ? "Sending..." : "Send Reset Email"}
-          </button>
-          <br />
-          <button
-            type="button"
-            onClick={() => {
-              setIsForgotPassword(false);
-              setErrorMsg("");
-            }}
-            disabled={loading}
-            style={{ marginTop: "1rem" }}
-          >
-            Back to Login
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={isLogin ? handleLogin : handleSignup}>
-          <label htmlFor="email">
-            Email:
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="username"
-              disabled={loading}
-            />
-          </label>
-          <br />
-          <label htmlFor="password">
-            Password:
-            <input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={isLogin ? "current-password" : "new-password"}
-              disabled={loading}
-            />
-          </label>
-          <br />
-
-          {!isLogin && (
-            <>
-              <label htmlFor="name">
-                Name:
-                <input
-                  id="name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={loading}
-                />
-              </label>
-              <br />
-              <label htmlFor="role">
-                Role:
-                <select
-                  id="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  disabled={loading}
-                >
-                  <option value="customer">Customer</option>
-                  <option value="restaurant">Restaurant</option>
-                </select>
-              </label>
-              <br />
-              <label htmlFor="location">
-                Location:
-                <input
-                  id="location"
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  disabled={loading}
-                />
-              </label>
-              <br />
-              <label htmlFor="contact">
-                Contact:
-                <input
-                  id="contact"
-                  type="text"
-                  value={contact}
-                  onChange={(e) => setContact(e.target.value)}
-                  disabled={loading}
-                />
-              </label>
-              <br />
-            </>
-          )}
-
-          <button type="submit" disabled={loading}>
-            {loading
-              ? isLogin
-                ? "Logging in..."
-                : "Signing up..."
-              : isLogin
-              ? "Login"
-              : "Sign Up"}
-          </button>
-          <br />
-          {isLogin && (
+        {isForgotPassword ? (
+          <form onSubmit={handleForgotPassword}>
+            <label htmlFor="email" style={{ color: "#3B38A0" }}>
+              Enter your email to reset password:
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                style={inputStyle}
+              />
+            </label>
+            <br />
+            <button type="submit" disabled={loading} style={buttonStyle}>
+              {loading ? "Sending..." : "Send Reset Email"}
+            </button>
+            <br />
             <button
               type="button"
               onClick={() => {
-                setIsForgotPassword(true);
+                setIsForgotPassword(false);
                 setErrorMsg("");
               }}
               disabled={loading}
-              style={{ marginTop: "1rem" }}
+              style={{ ...buttonStyle, marginTop: "1rem" }}
             >
-              Forgot Password?
+              Back to Login
             </button>
-          )}
-        </form>
-      )}
+          </form>
+        ) : (
+          <form onSubmit={isLogin ? handleLogin : handleSignup}>
+            <label htmlFor="email" style={labelStyle}>
+              Email:
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
+                disabled={loading}
+                style={inputStyle}
+              />
+            </label>
+            <br />
+            <label htmlFor="password" style={labelStyle}>
+              Password:
+              <input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={isLogin ? "current-password" : "new-password"}
+                disabled={loading}
+                style={inputStyle}
+              />
+            </label>
+            <br />
 
-      {errorMsg && (
-        <p style={{ color: errorMsg.startsWith("Signup successful") || errorMsg.startsWith("Password reset") ? "green" : "red" }}>
-          {errorMsg}
-        </p>
-      )}
+            {!isLogin && (
+              <>
+                <label htmlFor="name" style={labelStyle}>
+                  Name:
+                  <input
+                    id="name"
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={loading}
+                    style={inputStyle}
+                  />
+                </label>
+                <br />
+                <label htmlFor="role" style={labelStyle}>
+                  Role:
+                  <select
+                    id="role"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    disabled={loading}
+                    style={inputStyle}
+                  >
+                    <option value="customer">Customer</option>
+                    <option value="restaurant">Restaurant</option>
+                  </select>
+                </label>
+                <br />
+                <label htmlFor="location" style={labelStyle}>
+                  Location:
+                  <input
+                    id="location"
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    disabled={loading}
+                    style={inputStyle}
+                  />
+                </label>
+                <br />
+                <label htmlFor="contact" style={labelStyle}>
+                  Contact:
+                  <input
+                    id="contact"
+                    type="text"
+                    value={contact}
+                    onChange={(e) => setContact(e.target.value)}
+                    disabled={loading}
+                    style={inputStyle}
+                  />
+                </label>
+                <br />
+              </>
+            )}
 
-      <button
-        onClick={() => navigate("/")}
-        disabled={loading}
-        style={{ marginTop: "1rem" }}
-      >
-        Back to Homepage
-      </button>
+            <button type="submit" disabled={loading} style={buttonStyle}>
+              {loading
+                ? isLogin
+                  ? "Logging in..."
+                  : "Signing up..."
+                : isLogin
+                ? "Login"
+                : "Sign Up"}
+            </button>
+            <br />
+            {isLogin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgotPassword(true);
+                  setErrorMsg("");
+                }}
+                disabled={loading}
+                style={{ ...buttonStyle, marginTop: "1rem" }}
+              >
+                Forgot Password?
+              </button>
+            )}
+          </form>
+        )}
+
+        {errorMsg && (
+          <p
+            style={{
+              marginTop: "1rem",
+              color: errorMsg.startsWith("Signup successful") || errorMsg.startsWith("Password reset")
+                ? "green"
+                : "red",
+              textAlign: "center",
+            }}
+          >
+            {errorMsg}
+          </p>
+        )}
+
+        <button
+          onClick={() => navigate("/")}
+          disabled={loading}
+          style={{ ...buttonStyle, marginTop: "1rem", width: "100%" }}
+        >
+          Back to Homepage
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,13 @@
+/* General app container */
 .App {
   text-align: center;
+  background-color: #1A2A80; /* Dark blue background */
+  min-height: 100vh;
+  color: #F1F6F9; /* Very light text for contrast */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Logo styling (if used) */
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -13,21 +19,55 @@
   }
 }
 
+/* Header styling */
 .App-header {
-  background-color: #282c34;
+  background-color: #1A2A80; /* Match background */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: #F1F6F9;
 }
 
+/* Links */
 .App-link {
-  color: #61dafb;
+  color: #B2B0E8; /* Light purple */
+  text-decoration: none;
 }
 
+.App-link:hover {
+  color: #7A85C1; /* Medium purple */
+}
+
+/* Button styles */
+.primary-button {
+  background-color: #3B38A0; /* Medium blue/purple */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(59, 56, 160, 0.5);
+}
+
+.primary-button:hover,
+.primary-button:focus {
+  background-color: #1A2A80; /* Darker blue on hover/focus */
+  outline: none;
+  box-shadow: 0 0 8px #7A85C1;
+}
+
+/* Logout container */
+.logout-container {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+/* Keyframes for logo spin */
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
@@ -35,4 +75,41 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Optional: inputs, textareas and selects styled consistently */
+input,
+textarea,
+select {
+  padding: 8px 12px;
+  border: 1px solid #B2B0E8; /* Light purple border */
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #1A2A80;
+  background-color: #F1F6F9;
+  transition: border-color 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #3B38A0; /* Medium blue */
+  outline: none;
+  box-shadow: 0 0 6px #7A85C1;
+}
+
+/* Scrollbar styling (optional) */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #3B38A0;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #B2B0E8;
 }
