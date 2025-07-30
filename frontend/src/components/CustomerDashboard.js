@@ -284,7 +284,7 @@ return (
         Search for Offers
       </h2>
     {/* Search input */}
-    <div className="w-screen px-4 sm:px-8">
+    <div className="fixed left-0 right-0 px-4 sm:px-8 bg-[#B2B0E8] z-10">
       <input
         type="text"
         placeholder="Search food or restaurant location..."
@@ -294,7 +294,7 @@ return (
         style={{
           padding: "12px 16px",
           fontSize: "1.125rem",
-          boxSizing: "border-box"
+          boxSizing: "border-box",
         }}
       />
     </div>
