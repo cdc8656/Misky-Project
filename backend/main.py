@@ -711,4 +711,3 @@ def update_profile(payload: dict, authorization: str = Header(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-
