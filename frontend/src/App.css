@@ -43,28 +43,39 @@
 
 /* Button styles */
 .primary-button {
-  background-color: #3B38A0; /* Medium blue/purple */
+  background-color: #3B38A0;
   color: white;
   border: none;
-  padding: 10px 20px;
-  font-size: 1rem;
-  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 12px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  box-shadow: 0 2px 5px rgba(59, 56, 160, 0.5);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(59, 56, 160, 0.3);
+  min-height: 44px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 .primary-button:hover,
 .primary-button:focus {
-  background-color: #1A2A80; /* Darker blue on hover/focus */
+  background-color: #5A56C4;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 56, 160, 0.4);
   outline: none;
-  box-shadow: 0 0 8px #7A85C1;
+}
+
+.primary-button:active {
+  transform: translateY(0);
 }
 
 /* Logout container */
 .logout-container {
-  text-align: center;
-  margin: 2rem 0;
+  position: fixed;
+  bottom: max(env(safe-area-inset-bottom), 24px);
+  right: 24px;
+  z-index: 1000;
 }
 
 /* Keyframes for logo spin */
