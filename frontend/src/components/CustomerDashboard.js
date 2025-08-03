@@ -218,285 +218,472 @@ const complete = async (reservation_id) => {
     );
 
 
+const styles = {
+  container: {
+    backgroundColor: "#fafafa",
+    minHeight: "100vh",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    padding: "max(env(safe-area-inset-top), 24px) 16px max(env(safe-area-inset-bottom), 24px)",
+    background: "linear-gradient(135deg, #fafafa 0%, #f5f5f7 100%)",
+  },
+
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "0 0 32px 0",
+    maxWidth: "1200px",
+    margin: "0 auto",
+  },
+
+  logo: {
+    width: "75px",
+    height: "auto",
+    borderRadius: "8px",
+  },
+
+  title: {
+    color: "#1a1a1a",
+    fontSize: "clamp(1.5rem, 4vw, 2rem)",
+    fontWeight: "700",
+    margin: 0,
+    letterSpacing: "-0.02em",
+  },
+
+  profileButton: {
+    backgroundColor: "#3B38A0",
+    color: "white",
+    padding: "12px 20px",
+    borderRadius: "12px",
+    textDecoration: "none",
+    fontWeight: "600",
+    fontSize: "0.95rem",
+    transition: "all 0.2s ease",
+    boxShadow: "0 2px 8px rgba(59, 56, 160, 0.3)",
+    minHeight: "44px",
+    display: "flex",
+    alignItems: "center",
+  },
+
+  content: {
+    maxWidth: "1200px",
+    margin: "0 auto",
+  },
+
+  sectionTitle: {
+    color: "#1a1a1a",
+    fontSize: "clamp(1.3rem, 3.5vw, 1.75rem)",
+    fontWeight: "600",
+    marginBottom: "24px",
+    marginTop: "48px",
+    letterSpacing: "-0.01em",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+
+  searchInput: {
+    width: "100%",
+    padding: "16px 20px",
+    fontSize: "1rem",
+    border: "2px solid rgba(255, 255, 255, 0.8)",
+    borderRadius: "16px",
+    backgroundColor: "white",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
+    marginBottom: "32px",
+    transition: "all 0.2s ease",
+    fontFamily: "inherit",
+  },
+
+  grid: {
+    display: "grid",
+    gap: "24px",
+    marginBottom: "48px",
+  },
+
+  card: {
+    backgroundColor: "white",
+    borderRadius: "16px",
+    padding: "24px",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1)",
+    border: "1px solid rgba(255, 255, 255, 0.8)",
+    transition: "all 0.3s ease",
+    display: "flex",
+    gap: "20px",
+    alignItems: "flex-start",
+  },
+
+  cardImage: {
+    width: "120px",
+    height: "120px",
+    objectFit: "cover",
+    borderRadius: "12px",
+    flexShrink: 0,
+  },
+
+  cardContent: {
+    flex: 1,
+    color: "#1a1a1a",
+  },
+
+  cardTitle: {
+    fontSize: "1.2rem",
+    fontWeight: "600",
+    margin: "0 0 12px 0",
+    letterSpacing: "-0.01em",
+  },
+
+  cardText: {
+    margin: "8px 0",
+    color: "#4a4a4a",
+    lineHeight: "1.5",
+  },
+
+  button: {
+    backgroundColor: "#3B38A0",
+    color: "white",
+    border: "none",
+    padding: "12px 20px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontSize: "0.95rem",
+    fontWeight: "600",
+    transition: "all 0.2s ease",
+    boxShadow: "0 2px 8px rgba(59, 56, 160, 0.3)",
+    minHeight: "44px",
+    marginTop: "12px",
+  },
+
+  buttonSecondary: {
+    backgroundColor: "#DC2626",
+    color: "white",
+    border: "none",
+    padding: "12px 20px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontSize: "0.95rem",
+    fontWeight: "600",
+    transition: "all 0.2s ease",
+    boxShadow: "0 2px 8px rgba(220, 38, 38, 0.3)",
+    minHeight: "44px",
+    marginRight: "12px",
+  },
+
+  notification: {
+    backgroundColor: "white",
+    padding: "16px 20px",
+    borderRadius: "12px",
+    marginBottom: "12px",
+    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.06)",
+    border: "1px solid rgba(255, 193, 7, 0.3)",
+    borderLeft: "4px solid #FFC107",
+  },
+
+  message: {
+    padding: "12px 20px",
+    borderRadius: "12px",
+    marginBottom: "24px",
+    fontWeight: "500",
+  },
+
+  errorMessage: {
+    backgroundColor: "#FEF2F2",
+    color: "#DC2626",
+    border: "1px solid #FCA5A5",
+  },
+
+  loadingMessage: {
+    backgroundColor: "#F0F9FF",
+    color: "#0369A1",
+    border: "1px solid #7DD3FC",
+  },
+};
+
 // UI/HTML Portion
 return (
-  <div style={{ backgroundColor: "#B2B0E8", minHeight: "100vh", paddingBottom: "40px" }} className="max-w-5xl mx-auto px-4 py-6">
+  <div style={styles.container}>
+    <div style={styles.content}>
+      {/* Header Section */}
+      <div style={styles.header}>
+        <img
+          src="/Misky Logo.png"
+          alt="Misky Logo"
+          style={styles.logo}
+        />
 
-  {/* Header Section with Logo, Title, and Profile Button */}
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: "20px 0",
-    }}
-  >
-    {/* Logo */}
-    <img
-      src="/Misky Logo.png"
-      alt="Misky Logo"
-      style={{ width: "75px", height: "auto" }}
-    />
+        <h1 style={styles.title}>Panel de Cliente</h1>
 
-    {/* Title */}
-    <h2
-      className="text-2xl font-bold"
-      style={{
-        color: "#1A2A80",
-        flexGrow: 1,
-        textAlign: "center",
-        margin: 0,
-      }}
-    >
-      Customer Dashboard
-    </h2>
+        <Link
+          to="/profile"
+          style={styles.profileButton}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = "#5A56C4";
+            e.target.style.transform = "translateY(-1px)";
+            e.target.style.boxShadow = "0 4px 12px rgba(59, 56, 160, 0.4)";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = "#3B38A0";
+            e.target.style.transform = "translateY(0)";
+            e.target.style.boxShadow = "0 2px 8px rgba(59, 56, 160, 0.3)";
+          }}
+        >
+          Perfil
+        </Link>
+      </div>
 
-    {/* Profile Button */}
-    <Link
-      to="/profile"
-      style={{
-        backgroundColor: "#3B38A0",
-        color: "#FFFFFF",
-        padding: "8px 16px",
-        borderRadius: "5px",
-        textDecoration: "none",
-        marginLeft: "auto",
-      }}
-      onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
-      onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
-    >
-      Profile
-    </Link>
-  </div>
+      {/* Messages */}
+      {error && (
+        <div style={{...styles.message, ...styles.errorMessage}}>
+          {error}
+        </div>
+      )}
+      {loading && (
+        <div style={{...styles.message, ...styles.loadingMessage}}>
+          Procesando reserva…
+        </div>
+      )}
 
-    {error && <p className="text-red-500">{error}</p>}
-    {loading && <p>Processing reservation…</p>}
-    {/* Search Section */}
-      <h2
-        className="text-2xl font-bold"
-        style={{
-          color: "#1A2A80",
-          flexGrow: 1,
-          textAlign: "Left",
-          margin: 0,
-        }}
-      >
-        Search for Offers
+      {/* Search Section */}
+      <h2 style={styles.sectionTitle}>
+        🔍 Buscar Ofertas
       </h2>
-    {/* Search input */}
+      
       <input
         type="text"
-        placeholder="Search food or restaurant location..."
+        placeholder="Busca comida o ubicación del restaurante..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            width: '99%',
-            padding: '0.6%',
-            boxSizing: 'border-box',  // important to include padding inside width
-          }}
+        style={styles.searchInput}
+        onFocus={(e) => {
+          e.target.style.borderColor = "#3B38A0";
+          e.target.style.boxShadow = "0 4px 12px rgba(59, 56, 160, 0.15)";
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = "rgba(255, 255, 255, 0.8)";
+          e.target.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.06)";
+        }}
       />
 
-    {/* === AVAILABLE FOOD OFFERS === */}
-    <h3
-      className="text-xl font-semibold mb-4 cursor-pointer"
-      style={{ color: "#1A2A80" }}
-      onClick={() => setShowOffers(!showOffers)}
-    >
-      {showOffers ? "▼ " : "▶ "}Available Food Offers
-    </h3>
-    {showOffers && (
-      <>
-        {filteredItems.length === 0 ? (
-          <p>No matching food offers at the moment.</p>
-        ) : (
-          <div style={{ display: "grid", gap: "1rem" }}>
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  border: "2px solid #3B38A0",
-                  borderRadius: "8px",
-                  padding: "1rem",
-                  backgroundColor: "#FFFFFF",
-                  display: "flex",
-                  gap: "1rem",
-                  alignItems: "center",
-                  boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                }}
-              >
-                {item.image_url && (
-                  <img
-                    src={item.image_url}
-                    alt={item.information}
-                    style={{
-                      width: "100px",
-                      height: "100px",
-                      objectFit: "cover",
-                      borderRadius: "8px",
-                      flexShrink: 0,
-                    }}
-                  />
-                )}
+      {/* Available Food Offers */}
+      <h3
+        style={styles.sectionTitle}
+        onClick={() => setShowOffers(!showOffers)}
+      >
+        {showOffers ? "▼" : "▶"} 🍽️ Ofertas Disponibles
+      </h3>
+      {showOffers && (
+        <>
+          {filteredItems.length === 0 ? (
+            <div style={{...styles.card, textAlign: "center", justifyContent: "center"}}>
+              <p style={{color: "#6b6b6b", margin: 0}}>No hay ofertas de comida disponibles en este momento.</p>
+            </div>
+          ) : (
+            <div style={styles.grid}>
+              {filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  style={styles.card}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1)";
+                  }}
+                >
+                  {item.image_url && (
+                    <img
+                      src={item.image_url}
+                      alt={item.information}
+                      style={styles.cardImage}
+                    />
+                  )}
 
-                <div style={{ color: "#1A2A80" }}>
-                  <h4 style={{ margin: "0 0 0.5rem" }}>{item.information}</h4>
-                  <p>
-                    <strong>Pickup:</strong> {new Date(item.pickup_time).toLocaleString()}
-                  </p>
-                  <p>
-                    <strong>Price:</strong> <b>S/.</b>
-                    {item.price.toFixed(2)} &nbsp;&nbsp;
-                    <strong>Spots left:</strong>{" "}
-                    {item.total_spots - (item.num_of_reservations || 0)}
-                  </p>
-                  <p>
-                    <strong>Location:</strong> {item.location}
-                  </p>
-                  <button
-                    disabled={loading}
-                    onClick={() => reserve(item.id)}
-                    style={{
-                      marginTop: "0.5rem",
-                      backgroundColor: "#3B38A0",
-                      color: "#fff",
-                      border: "none",
-                      padding: "6px 12px",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                    onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
-                    onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
-                  >
-                    Reserve
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </>
-    )}
-
-    {/* === CUSTOMER RESERVATIONS === */}
-    <h3
-      className="text-xl font-semibold mt-10 mb-4 cursor-pointer"
-      style={{ color: "#1A2A80" }}
-      onClick={() => setShowReservations(!showReservations)}
-    >
-      {showReservations ? "▼ " : "▶ "}Your Reservations
-    </h3>
-    {showReservations && (
-      <>
-        {reservations.length === 0 ? (
-          <p>You have no reservations yet.</p>
-        ) : (
-          <ul className="space-y-4">
-            {reservations.map((r) => (
-              <li
-                key={r.id}
-                style={{
-                  backgroundColor: "#fff",
-                  padding: "1rem",
-                  borderRadius: "12px",
-                  border: "2px solid #3B38A0",
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
-                  color: "#1A2A80",
-                }}
-              >
-                <h4 className="font-semibold text-lg mb-1">{r.item.information}</h4>
-                <p>
-                  <strong>Pickup Time:</strong> {new Date(r.item.pickup_time).toLocaleString()}
-                </p>
-                <p>
-                  <strong>Price:</strong> <b>S/.</b>
-                  {r.item.price.toFixed(2)}
-                </p>
-                <p>
-                  <strong>Location:</strong> {r.item.location}
-                </p>
-                <p className="mb-3">
-                  <strong>Status:</strong> {r.status}
-                </p>
-
-                {r.status === "active" && (
-                  <div className="flex" style={{ marginTop: "0.5rem" }}>
+                  <div style={styles.cardContent}>
+                    <h4 style={styles.cardTitle}>{item.information}</h4>
+                    <p style={styles.cardText}>
+                      <strong>Recojo:</strong> {new Date(item.pickup_time).toLocaleString()}
+                    </p>
+                    <p style={styles.cardText}>
+                      <strong>Precio:</strong> <b>S/.</b>{item.price.toFixed(2)} &nbsp;&nbsp;
+                      <strong>Disponibles:</strong> {item.total_spots - (item.num_of_reservations || 0)}
+                    </p>
+                    <p style={styles.cardText}>
+                      <strong>Ubicación:</strong> {item.location}
+                    </p>
                     <button
                       disabled={loading}
-                      onClick={() => cancel(r.id)}
+                      onClick={() => reserve(item.id)}
                       style={{
-                        backgroundColor: "#DC2626",
-                        color: "#fff",
-                        border: "none",
-                        padding: "6px 12px",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        transition: "background-color 0.3s ease",
-                        marginRight: "12px",
-                        minWidth: "80px",
+                        ...styles.button,
+                        opacity: loading ? 0.6 : 1,
                       }}
-                      onMouseOver={(e) => (e.target.style.backgroundColor = "#B22222")}
-                      onMouseOut={(e) => (e.target.style.backgroundColor = "#DC2626")}
-                    >
-                      Cancel
-                    </button>
-
-                    <button
-                      disabled={loading}
-                      onClick={() => complete(r.id)}
-                      style={{
-                        backgroundColor: "#3B38A0",
-                        color: "#fff",
-                        border: "none",
-                        padding: "6px 12px",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        transition: "background-color 0.3s ease",
-                        minWidth: "80px",
+                      onMouseEnter={(e) => {
+                        if (!loading) {
+                          e.target.style.backgroundColor = "#5A56C4";
+                          e.target.style.transform = "translateY(-1px)";
+                          e.target.style.boxShadow = "0 4px 12px rgba(59, 56, 160, 0.4)";
+                        }
                       }}
-                      onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
-                      onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = "#3B38A0";
+                        e.target.style.transform = "translateY(0)";
+                        e.target.style.boxShadow = "0 2px 8px rgba(59, 56, 160, 0.3)";
+                      }}
                     >
-                      Complete
+                      Reservar
                     </button>
                   </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </>
-    )}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
 
-    {/* === NOTIFICATIONS === */}
-    <h3
-      className="text-xl font-semibold mt-10 mb-4 cursor-pointer"
-      style={{ color: "#1A2A80" }}
-      onClick={() => setShowNotifications(!showNotifications)}
-    >
-      {showNotifications ? "▼ " : "▶ "}Notifications
-    </h3>
-    {showNotifications && (
-      <>
-        {notifications.length === 0 ? (
-          <p>No notifications yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {notifications.map((note) => (
-              <li
-                key={note.id}
-                className="p-3 rounded-md text-sm shadow"
-                style={{ backgroundColor: "#FFF9C4", color: "#1A2A80" }}
-              >
-                {note.message}
-                <span className="text-gray-600 block text-xs mt-1">
-                  {new Date(note.created_at).toLocaleString()}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </>
-    )}
+      {/* Your Reservations */}
+      <h3
+        style={styles.sectionTitle}
+        onClick={() => setShowReservations(!showReservations)}
+      >
+        {showReservations ? "▼" : "▶"} 📋 Mis Reservas
+      </h3>
+      {showReservations && (
+        <>
+          {reservations.length === 0 ? (
+            <div style={{...styles.card, textAlign: "center", justifyContent: "center"}}>
+              <p style={{color: "#6b6b6b", margin: 0}}>Aún no tienes reservas.</p>
+            </div>
+          ) : (
+            <div style={styles.grid}>
+              {reservations.map((r) => (
+                <div
+                  key={r.id}
+                  style={styles.card}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1)";
+                  }}
+                >
+                  <div style={styles.cardContent}>
+                    <h4 style={styles.cardTitle}>{r.item.information}</h4>
+                    <p style={styles.cardText}>
+                      <strong>Hora de recojo:</strong> {new Date(r.item.pickup_time).toLocaleString()}
+                    </p>
+                    <p style={styles.cardText}>
+                      <strong>Precio:</strong> <b>S/.</b>{r.item.price.toFixed(2)}
+                    </p>
+                    <p style={styles.cardText}>
+                      <strong>Ubicación:</strong> {r.item.location}
+                    </p>
+                    <p style={{...styles.cardText, marginBottom: "16px"}}>
+                      <strong>Estado:</strong> <span style={{
+                        backgroundColor: r.status === "active" ? "#10B981" : "#6B7280",
+                        color: "white",
+                        padding: "4px 8px",
+                        borderRadius: "8px",
+                        fontSize: "0.85rem",
+                        fontWeight: "600"
+                      }}>{r.status === "active" ? "activa" : r.status === "completed" ? "completada" : "cancelada"}</span>
+                    </p>
+
+                    {r.status === "active" && (
+                      <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+                        <button
+                          disabled={loading}
+                          onClick={() => cancel(r.id)}
+                          style={{
+                            ...styles.buttonSecondary,
+                            opacity: loading ? 0.6 : 1,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!loading) {
+                              e.target.style.backgroundColor = "#B91C1C";
+                              e.target.style.transform = "translateY(-1px)";
+                              e.target.style.boxShadow = "0 4px 12px rgba(220, 38, 38, 0.4)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = "#DC2626";
+                            e.target.style.transform = "translateY(0)";
+                            e.target.style.boxShadow = "0 2px 8px rgba(220, 38, 38, 0.3)";
+                          }}
+                        >
+                          Cancelar
+                        </button>
+
+                        <button
+                          disabled={loading}
+                          onClick={() => complete(r.id)}
+                          style={{
+                            ...styles.button,
+                            opacity: loading ? 0.6 : 1,
+                            margin: 0,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!loading) {
+                              e.target.style.backgroundColor = "#5A56C4";
+                              e.target.style.transform = "translateY(-1px)";
+                              e.target.style.boxShadow = "0 4px 12px rgba(59, 56, 160, 0.4)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = "#3B38A0";
+                            e.target.style.transform = "translateY(0)";
+                            e.target.style.boxShadow = "0 2px 8px rgba(59, 56, 160, 0.3)";
+                          }}
+                        >
+                          Confirmar Recojo
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Notifications */}
+      <h3
+        style={styles.sectionTitle}
+        onClick={() => setShowNotifications(!showNotifications)}
+      >
+        {showNotifications ? "▼" : "▶"} 🔔 Notificaciones
+      </h3>
+      {showNotifications && (
+        <>
+          {notifications.length === 0 ? (
+            <div style={{...styles.card, textAlign: "center", justifyContent: "center"}}>
+              <p style={{color: "#6b6b6b", margin: 0}}>No tienes notificaciones aún.</p>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: "12px", marginBottom: "48px" }}>
+              {notifications.map((note) => (
+                <div
+                  key={note.id}
+                  style={styles.notification}
+                >
+                  <p style={{ margin: "0 0 8px 0", color: "#1a1a1a", fontWeight: "500" }}>
+                    {note.message}
+                  </p>
+                  <span style={{ color: "#6b6b6b", fontSize: "0.85rem" }}>
+                    {new Date(note.created_at).toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
   </div>
 );
 

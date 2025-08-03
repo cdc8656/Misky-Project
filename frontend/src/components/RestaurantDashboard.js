@@ -198,289 +198,515 @@ export default function RestaurantDashboard({ user }) {
 
 
 
+const styles = {
+  container: {
+    backgroundColor: "#fafafa",
+    minHeight: "100vh",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    padding: "max(env(safe-area-inset-top), 24px) 16px max(env(safe-area-inset-bottom), 24px)",
+    background: "linear-gradient(135deg, #fafafa 0%, #f5f5f7 100%)",
+  },
+
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "0 0 32px 0",
+    maxWidth: "1200px",
+    margin: "0 auto",
+  },
+
+  logo: {
+    width: "75px",
+    height: "auto",
+    borderRadius: "8px",
+  },
+
+  title: {
+    color: "#1a1a1a",
+    fontSize: "clamp(1.5rem, 4vw, 2rem)",
+    fontWeight: "700",
+    margin: 0,
+    letterSpacing: "-0.02em",
+  },
+
+  profileButton: {
+    backgroundColor: "#3B38A0",
+    color: "white",
+    padding: "12px 20px",
+    borderRadius: "12px",
+    textDecoration: "none",
+    fontWeight: "600",
+    fontSize: "0.95rem",
+    transition: "all 0.2s ease",
+    boxShadow: "0 2px 8px rgba(59, 56, 160, 0.3)",
+    minHeight: "44px",
+    display: "flex",
+    alignItems: "center",
+  },
+
+  content: {
+    maxWidth: "1200px",
+    margin: "0 auto",
+  },
+
+  sectionTitle: {
+    color: "#1a1a1a",
+    fontSize: "clamp(1.3rem, 3.5vw, 1.75rem)",
+    fontWeight: "600",
+    marginBottom: "24px",
+    marginTop: "48px",
+    letterSpacing: "-0.01em",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+
+  form: {
+    backgroundColor: "white",
+    padding: "24px",
+    borderRadius: "16px",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1)",
+    border: "1px solid rgba(255, 255, 255, 0.8)",
+    marginBottom: "48px",
+    display: "grid",
+    gap: "20px",
+    maxWidth: "600px",
+  },
+
+  input: {
+    width: "100%",
+    padding: "12px 16px",
+    fontSize: "1rem",
+    border: "2px solid #e5e7eb",
+    borderRadius: "12px",
+    backgroundColor: "white",
+    transition: "all 0.2s ease",
+    fontFamily: "inherit",
+  },
+
+  button: {
+    backgroundColor: "#3B38A0",
+    color: "white",
+    border: "none",
+    padding: "12px 20px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontSize: "0.95rem",
+    fontWeight: "600",
+    transition: "all 0.2s ease",
+    boxShadow: "0 2px 8px rgba(59, 56, 160, 0.3)",
+    minHeight: "44px",
+  },
+
+  buttonSecondary: {
+    backgroundColor: "#DC2626",
+    color: "white",
+    border: "none",
+    padding: "12px 20px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontSize: "0.95rem",
+    fontWeight: "600",
+    transition: "all 0.2s ease",
+    boxShadow: "0 2px 8px rgba(220, 38, 38, 0.3)",
+    minHeight: "44px",
+    marginRight: "12px",
+  },
+
+  grid: {
+    display: "grid",
+    gap: "24px",
+    marginBottom: "48px",
+  },
+
+  card: {
+    backgroundColor: "white",
+    borderRadius: "16px",
+    padding: "24px",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1)",
+    border: "1px solid rgba(255, 255, 255, 0.8)",
+    transition: "all 0.3s ease",
+    display: "flex",
+    gap: "20px",
+    alignItems: "flex-start",
+  },
+
+  cardImage: {
+    width: "120px",
+    height: "120px",
+    objectFit: "cover",
+    borderRadius: "12px",
+    flexShrink: 0,
+  },
+
+  cardImagePlaceholder: {
+    width: "120px",
+    height: "120px",
+    backgroundColor: "#f3f4f6",
+    borderRadius: "12px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#9ca3af",
+    fontSize: "0.875rem",
+    flexShrink: 0,
+  },
+
+  cardContent: {
+    flex: 1,
+    color: "#1a1a1a",
+  },
+
+  cardTitle: {
+    fontSize: "1.2rem",
+    fontWeight: "600",
+    margin: "0 0 12px 0",
+    letterSpacing: "-0.01em",
+  },
+
+  cardText: {
+    margin: "8px 0",
+    color: "#4a4a4a",
+    lineHeight: "1.5",
+  },
+
+  notification: {
+    backgroundColor: "white",
+    padding: "16px 20px",
+    borderRadius: "12px",
+    marginBottom: "12px",
+    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.06)",
+    border: "1px solid rgba(255, 193, 7, 0.3)",
+    borderLeft: "4px solid #FFC107",
+  },
+
+  message: {
+    padding: "12px 20px",
+    borderRadius: "12px",
+    marginBottom: "24px",
+    fontWeight: "500",
+  },
+
+  errorMessage: {
+    backgroundColor: "#FEF2F2",
+    color: "#DC2626",
+    border: "1px solid #FCA5A5",
+  },
+
+  loadingMessage: {
+    backgroundColor: "#F0F9FF",
+    color: "#0369A1",
+    border: "1px solid #7DD3FC",
+  },
+};
+
 return (
-<div
-  style={{ backgroundColor: "#B2B0E8", minHeight: "100vh", paddingBottom: "40px" }}
-  className="max-w-5xl mx-auto px-4 py-6"
->
-  {/* Header Section with Logo, Title, and Profile Button */}
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: "20px 0",
-    }}
+<div style={styles.container}>
+  <div style={styles.content}>
+    {/* Header Section */}
+    <div style={styles.header}>
+      <img
+        src="/Misky Logo.png"
+        alt="Misky Logo"
+        style={styles.logo}
+      />
+
+      <h1 style={styles.title}>Panel de Restaurante</h1>
+
+      <Link
+        to="/profile"
+        style={styles.profileButton}
+        onMouseEnter={(e) => {
+          e.target.style.backgroundColor = "#5A56C4";
+          e.target.style.transform = "translateY(-1px)";
+          e.target.style.boxShadow = "0 4px 12px rgba(59, 56, 160, 0.4)";
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.backgroundColor = "#3B38A0";
+          e.target.style.transform = "translateY(0)";
+          e.target.style.boxShadow = "0 2px 8px rgba(59, 56, 160, 0.3)";
+        }}
       >
-        {/* Logo */}
-        <img
-          src="/Misky Logo.png"
-          alt="Misky Logo"
-          style={{ width: "75px", height: "auto" }}
-        />
+        Perfil
+      </Link>
+    </div>
 
-        {/* Title */}
-        <h2
-          className="text-2xl font-bold"
-          style={{
-            color: "#1A2A80",
-            flexGrow: 1,
-            textAlign: "center",
-            margin: 0,
-          }}
-        >
-          Restaurant Dashboard
-        </h2>
-
-        {/* Profile Button */}
-        <Link
-          to="/profile"
-          style={{
-            backgroundColor: "#3B38A0",
-            color: "#FFFFFF",
-            padding: "8px 16px",
-            borderRadius: "5px",
-            textDecoration: "none",
-            marginLeft: "auto",
-          }}
-          onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
-          onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
-        >
-          Profile
-        </Link>
-      </div>
-
-      {/* Notifications */}
-      <div className="mb-8">
-        <h3
-          className="text-xl font-semibold mt-10 mb-4 cursor-pointer"
-          style={{ color: "#1A2A80" }}
-          onClick={() => setShowNotifications(!showNotifications)}
-        >
-          {showNotifications ? "▼ " : "▶ "}Notifications
-        </h3>
-        {showNotifications && (
-          <>
-            {notifications.length === 0 ? (
-              <p>No notifications yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {notifications.map((note) => (
-                  <li key={note.id} className="text-gray-700">
-                    {note.message} —{" "}
-                    <span className="text-gray-500 text-sm">
-                      {new Date(note.created_at).toLocaleString()}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
+    {/* Notifications */}
+    <h3
+      style={styles.sectionTitle}
+      onClick={() => setShowNotifications(!showNotifications)}
+    >
+      {showNotifications ? "▼" : "▶"} 🔔 Notificaciones
+    </h3>
+    {showNotifications && (
+      <>
+        {notifications.length === 0 ? (
+          <div style={{...styles.card, textAlign: "center", justifyContent: "center"}}>
+            <p style={{color: "#6b6b6b", margin: 0}}>No tienes notificaciones aún.</p>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gap: "12px", marginBottom: "48px" }}>
+            {notifications.map((note) => (
+              <div
+                key={note.id}
+                style={styles.notification}
+              >
+                <p style={{ margin: "0 0 8px 0", color: "#1a1a1a", fontWeight: "500" }}>
+                  {note.message}
+                </p>
+                <span style={{ color: "#6b6b6b", fontSize: "0.85rem" }}>
+                  {new Date(note.created_at).toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
         )}
-      </div>
+      </>
+    )}
 
-      {/* Item Creation Form */}
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-3" style={{ color: "#1A2A80" }}>
-          Item Creation Form
-        </h3>
-        <form onSubmit={handleSubmit} className="mb-10 space-y-4 max-w-md">
-          <input
-            name="information"
-            placeholder="Info"
-            value={form.information}
-            onChange={handleChange}
-            required
-            className="w-full p-2 border border-gray-300 rounded"
-          />
-          <input
-            name="pickup_time"
-            type="datetime-local"
-            placeholder="Pick Up Time"
-            value={form.pickup_time}
-            onChange={handleChange}
-            required
-            className="w-full p-2 border border-gray-300 rounded"
-          />
-          <input
-            name="total_spots"
-            type="number"
-            min="1"
-            placeholder="Number of Servings"
-            value={form.total_spots}
-            onChange={handleChange}
-            required
-            className="w-full p-2 border border-gray-300 rounded"
-          />
-          <input
-            name="price"
-            type="number"
-            step="0.01"
-            placeholder="Price"
-            value={form.price}
-            onChange={handleChange}
-            required
-            className="w-full p-2 border border-gray-300 rounded"
-          />
-          <input
-            type="file"
-            name="image"
-            accept="image/*"
-            onChange={handleChange}
-            className="w-full"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
-            onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
-            style={{
-              backgroundColor: "#3B38A0",
-              color: "#fff",
-              border: "none",
-              padding: "6px 12px",
-              borderRadius: "4px",
-              cursor: "pointer",
-              transition: "background-color 0.3s ease",
-              minWidth: "80px",
-              opacity: loading ? 0.5 : 1,
-            }}
-          >
-            {loading ? "Submitting..." : "Create Offer"}
-          </button>
-        </form>
-      </div>
-
-      {/* Current Offers */}
-      <h3
-        className="text-xl font-semibold mb-4 cursor-pointer"
-        style={{ color: "#1A2A80" }}
-        onClick={() => setShowOffers(!showOffers)}
+    {/* Item Creation Form */}
+    <h3 style={styles.sectionTitle}>
+      ✨ Crear Nueva Oferta
+    </h3>
+    <form onSubmit={handleSubmit} style={styles.form}>
+      <input
+        name="information"
+        placeholder="Descripción de la comida (ej: Croissants frescos, Porciones de pizza)"
+        value={form.information}
+        onChange={handleChange}
+        required
+        style={styles.input}
+        onFocus={(e) => {
+          e.target.style.borderColor = "#3B38A0";
+          e.target.style.boxShadow = "0 0 0 3px rgba(59, 56, 160, 0.1)";
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = "#e5e7eb";
+          e.target.style.boxShadow = "none";
+        }}
+      />
+      <input
+        name="pickup_time"
+        type="datetime-local"
+        value={form.pickup_time}
+        onChange={handleChange}
+        required
+        style={styles.input}
+        onFocus={(e) => {
+          e.target.style.borderColor = "#3B38A0";
+          e.target.style.boxShadow = "0 0 0 3px rgba(59, 56, 160, 0.1)";
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = "#e5e7eb";
+          e.target.style.boxShadow = "none";
+        }}
+      />
+      <input
+        name="total_spots"
+        type="number"
+        min="1"
+        placeholder="Número de porciones disponibles"
+        value={form.total_spots}
+        onChange={handleChange}
+        required
+        style={styles.input}
+        onFocus={(e) => {
+          e.target.style.borderColor = "#3B38A0";
+          e.target.style.boxShadow = "0 0 0 3px rgba(59, 56, 160, 0.1)";
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = "#e5e7eb";
+          e.target.style.boxShadow = "none";
+        }}
+      />
+      <input
+        name="price"
+        type="number"
+        step="0.01"
+        placeholder="Precio en soles (S/.)"
+        value={form.price}
+        onChange={handleChange}
+        required
+        style={styles.input}
+        onFocus={(e) => {
+          e.target.style.borderColor = "#3B38A0";
+          e.target.style.boxShadow = "0 0 0 3px rgba(59, 56, 160, 0.1)";
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = "#e5e7eb";
+          e.target.style.boxShadow = "none";
+        }}
+      />
+      <input
+        type="file"
+        name="image"
+        accept="image/*"
+        onChange={handleChange}
+        style={{...styles.input, padding: "8px 12px"}}
+      />
+      <button
+        type="submit"
+        disabled={loading}
+        style={{
+          ...styles.button,
+          opacity: loading ? 0.6 : 1,
+        }}
+        onMouseEnter={(e) => {
+          if (!loading) {
+            e.target.style.backgroundColor = "#5A56C4";
+            e.target.style.transform = "translateY(-1px)";
+            e.target.style.boxShadow = "0 4px 12px rgba(59, 56, 160, 0.4)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.backgroundColor = "#3B38A0";
+          e.target.style.transform = "translateY(0)";
+          e.target.style.boxShadow = "0 2px 8px rgba(59, 56, 160, 0.3)";
+        }}
       >
-        {showOffers ? "▼ " : "▶ "} Your Current Food Offers
-      </h3>
+        {loading ? "Creando..." : "Crear Oferta"}
+      </button>
+    </form>
 
-      {showOffers && (
-        <>
-          {loading && <p>Loading offers…</p>}
-          {error && <p className="text-red-600 mb-4">Error: {error}</p>}
-          {!loading && !error && items.length === 0 && <p>No offers found.</p>}
+    {/* Current Offers */}
+    <h3
+      style={styles.sectionTitle}
+      onClick={() => setShowOffers(!showOffers)}
+    >
+      {showOffers ? "▼" : "▶"} 🍽️ Tus Ofertas Actuales
+    </h3>
 
-          {!loading && !error && items.length > 0 && (
-            <div className="grid gap-4">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    border: "2px solid #3B38A0",
-                    borderRadius: "8px",
-                    padding: "1rem",
-                    backgroundColor: "#FFFFFF",
-                    display: "flex",
-                    gap: "1rem",
-                    alignItems: "center",
-                    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  {/* Image */}
-                  {item.image_url ? (
-                    <img
-                      src={item.image_url}
-                      alt={item.information}
-                      style={{
-                        width: "100px",
-                        height: "100px",
-                        objectFit: "cover",
-                        borderRadius: "8px",
-                        flexShrink: 0,
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: "100px",
-                        height: "100px",
-                        backgroundColor: "#e2e8f0",
-                        borderRadius: "8px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#9ca3af",
-                        fontSize: "0.875rem",
-                        flexShrink: 0,
-                      }}
-                    >
-                      No Image
+    {showOffers && (
+      <>
+        {loading && (
+          <div style={{...styles.message, ...styles.loadingMessage}}>
+            Cargando ofertas…
+          </div>
+        )}
+        
+        {error && (
+          <div style={{...styles.message, ...styles.errorMessage}}>
+            Error: {error}
+          </div>
+        )}
+        
+        {!loading && !error && items.length === 0 && (
+          <div style={{...styles.card, textAlign: "center", justifyContent: "center"}}>
+            <p style={{color: "#6b6b6b", margin: 0}}>No se encontraron ofertas.</p>
+          </div>
+        )}
+
+        {!loading && !error && items.length > 0 && (
+          <div style={styles.grid}>
+            {items.map((item) => (
+              <div
+                key={item.id}
+                style={styles.card}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.15)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1)";
+                }}
+              >
+                {/* Image */}
+                {item.image_url ? (
+                  <img
+                    src={item.image_url}
+                    alt={item.information}
+                    style={styles.cardImage}
+                  />
+                ) : (
+                  <div style={styles.cardImagePlaceholder}>
+                    Sin Imagen
+                  </div>
+                )}
+
+                {/* Details */}
+                <div style={styles.cardContent}>
+                  <h4 style={styles.cardTitle}>{item.information}</h4>
+                  <p style={styles.cardText}>
+                    <strong>Recojo:</strong> {new Date(item.pickup_time).toLocaleString()}
+                  </p>
+                  <p style={styles.cardText}>
+                    <strong>Precio:</strong> <b>S/.</b>{item.price.toFixed(2)} &nbsp;&nbsp;
+                    <strong>Disponibles:</strong> {item.total_spots - (item.num_of_reservations || 0)}
+                  </p>
+                  <p style={styles.cardText}>
+                    <strong>Ubicación:</strong> {item.location}
+                  </p>
+                  <p style={{...styles.cardText, marginBottom: "16px"}}>
+                    <strong>Estado:</strong> <span style={{
+                      backgroundColor: item.status === "active" ? "#10B981" : "#6B7280",
+                      color: "white",
+                      padding: "4px 8px",
+                      borderRadius: "8px",
+                      fontSize: "0.85rem",
+                      fontWeight: "600"
+                    }}>{item.status === "active" ? "activa" : item.status === "completed" ? "completada" : "cancelada"}</span>
+                  </p>
+
+                  {/* Action Buttons */}
+                  {item.status === "active" && (
+                    <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+                      <button
+                        disabled={loading}
+                        onClick={() => handleCancel(item.id)}
+                        style={{
+                          ...styles.buttonSecondary,
+                          opacity: loading ? 0.6 : 1,
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!loading) {
+                            e.target.style.backgroundColor = "#B91C1C";
+                            e.target.style.transform = "translateY(-1px)";
+                            e.target.style.boxShadow = "0 4px 12px rgba(220, 38, 38, 0.4)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = "#DC2626";
+                          e.target.style.transform = "translateY(0)";
+                          e.target.style.boxShadow = "0 2px 8px rgba(220, 38, 38, 0.3)";
+                        }}
+                      >
+                        Cancelar Oferta
+                      </button>
+                      <button
+                        disabled={loading}
+                        onClick={() => handleComplete(item.id)}
+                        style={{
+                          ...styles.button,
+                          opacity: loading ? 0.6 : 1,
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!loading) {
+                            e.target.style.backgroundColor = "#5A56C4";
+                            e.target.style.transform = "translateY(-1px)";
+                            e.target.style.boxShadow = "0 4px 12px rgba(59, 56, 160, 0.4)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = "#3B38A0";
+                          e.target.style.transform = "translateY(0)";
+                          e.target.style.boxShadow = "0 2px 8px rgba(59, 56, 160, 0.3)";
+                        }}
+                      >
+                        Completar Oferta
+                      </button>
                     </div>
                   )}
-
-                  {/* Details */}
-                  <div style={{ color: "#1A2A80", flex: 1 }}>
-                    <h4 style={{ margin: "0 0 0.5rem" }}>{item.information}</h4>
-                    <p style={{ margin: "0.25rem 0" }}>
-                      <strong>Pickup:</strong> {new Date(item.pickup_time).toLocaleString()}
-                    </p>
-                    <p style={{ margin: "0.25rem 0" }}>
-                      <strong>Price:</strong> <b>S/.</b>{item.price.toFixed(2)} &nbsp;&nbsp;
-                      <strong>Spots left:</strong>{" "}
-                      {item.total_spots - (item.num_of_reservations || 0)}
-                    </p>
-                    <p style={{ margin: "0.25rem 0" }}>
-                      <strong>Location:</strong> {item.location}
-                    </p>
-                    <p style={{ margin: "0.25rem 0" }}>
-                      <strong>Status:</strong> {item.status}
-                    </p>
-
-                    {/* Action Buttons */}
-                    {item.status === "active" && (
-                      <div className="flex" style={{ marginTop: "0.5rem" }}>
-                        <button
-                          disabled={loading}
-                          onClick={() => handleCancel(item.id)}
-                          style={{
-                            backgroundColor: "#DC2626",
-                            color: "#fff",
-                            border: "none",
-                            padding: "6px 12px",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            transition: "background-color 0.3s ease",
-                            marginRight: "12px",
-                            minWidth: "80px",
-                          }}
-                          onMouseOver={(e) => (e.target.style.backgroundColor = "#B22222")}
-                          onMouseOut={(e) => (e.target.style.backgroundColor = "#DC2626")}
-                        >
-                          Cancel Offer
-                        </button>
-                        <button
-                          disabled={loading}
-                          onClick={() => handleComplete(item.id)}
-                          style={{
-                            backgroundColor: "#3B38A0",
-                            color: "#fff",
-                            border: "none",
-                            padding: "6px 12px",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            transition: "background-color 0.3s ease",
-                            minWidth: "80px",
-                          }}
-                          onMouseOver={(e) => (e.target.style.backgroundColor = "#7A85C1")}
-                          onMouseOut={(e) => (e.target.style.backgroundColor = "#3B38A0")}
-                        >
-                          Complete Offer
-                        </button>
-                      </div>
-                    )}
-                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
+              </div>
+            ))}
+          </div>
+        )}
+      </>
+    )}
+  </div>
+</div>
+);
 }

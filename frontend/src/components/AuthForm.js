@@ -45,7 +45,7 @@ export default function AuthForm({ type = "login", onAuth, supabase }) {
         resetForm();
       }
     } catch (err) {
-      setErrorMsg("Unexpected error during login.");
+      setErrorMsg("Error inesperado al iniciar sesión.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -82,15 +82,15 @@ export default function AuthForm({ type = "login", onAuth, supabase }) {
 
         if (profileError) {
           console.error("Profile insert error:", profileError.message);
-          setErrorMsg("Signup succeeded, but failed to create profile: " + profileError.message);
+          setErrorMsg("Registro exitoso, pero falló al crear el perfil: " + profileError.message);
           setLoading(false);
           return;
         }
 
-        setErrorMsg("Signup successful! Please check your email to confirm your account before logging in.");
+        setErrorMsg("¡Registro exitoso! Por favor revisa tu email para confirmar tu cuenta antes de iniciar sesión.");
       }
     } catch (err) {
-      setErrorMsg("Unexpected error during signup.");
+      setErrorMsg("Error inesperado durante el registro.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -110,10 +110,10 @@ export default function AuthForm({ type = "login", onAuth, supabase }) {
       if (error) {
         setErrorMsg(error.message);
       } else {
-        setErrorMsg("Password reset email sent! Please check your inbox.");
+        setErrorMsg("¡Email de restablecimiento enviado! Por favor revisa tu bandeja de entrada.");
       }
     } catch (err) {
-      setErrorMsg("Unexpected error sending reset email.");
+      setErrorMsg("Error inesperado al enviar el email de restablecimiento.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -171,16 +171,16 @@ const labelStyle = {
       >
         <h2 style={{ color: "#1A2A80", textAlign: "center", marginBottom: "1rem" }}>
           {isForgotPassword
-            ? "Reset Password"
+            ? "Restablecer Contraseña"
             : isLogin
-            ? "Login"
-            : "Sign Up"}
+            ? "Iniciar Sesión"
+            : "Crear Cuenta"}
         </h2>
 
         {isForgotPassword ? (
           <form onSubmit={handleForgotPassword}>
             <label htmlFor="email" style={{ color: "#3B38A0" }}>
-              Enter your email to reset password:
+              Ingresa tu email para restablecer tu contraseña:
               <input
                 id="email"
                 type="email"
@@ -193,7 +193,7 @@ const labelStyle = {
             </label>
             <br />
             <button type="submit" disabled={loading} style={buttonStyle}>
-              {loading ? "Sending..." : "Send Reset Email"}
+              {loading ? "Enviando..." : "Enviar Email de Restablecimiento"}
             </button>
             <br />
             <button
@@ -205,7 +205,7 @@ const labelStyle = {
               disabled={loading}
               style={{ ...buttonStyle, marginTop: "1rem" }}
             >
-              Back to Login
+              Volver a Iniciar Sesión
             </button>
           </form>
         ) : (
@@ -225,7 +225,7 @@ const labelStyle = {
             </label>
             <br />
             <label htmlFor="password" style={labelStyle}>
-              Password:
+              Contraseña:
               <input
                 id="password"
                 type="password"
@@ -242,7 +242,7 @@ const labelStyle = {
             {!isLogin && (
               <>
                 <label htmlFor="name" style={labelStyle}>
-                  Name:
+                  Nombre:
                   <input
                     id="name"
                     type="text"
@@ -255,7 +255,7 @@ const labelStyle = {
                 </label>
                 <br />
                 <label htmlFor="role" style={labelStyle}>
-                  Role:
+                  Tipo de Usuario:
                   <select
                     id="role"
                     value={role}
@@ -263,13 +263,13 @@ const labelStyle = {
                     disabled={loading}
                     style={inputStyle}
                   >
-                    <option value="customer">Customer</option>
-                    <option value="restaurant">Restaurant</option>
+                    <option value="customer">Cliente</option>
+                    <option value="restaurant">Restaurante</option>
                   </select>
                 </label>
                 <br />
                 <label htmlFor="location" style={labelStyle}>
-                  Location:
+                  Ubicación:
                   <input
                     id="location"
                     type="text"
@@ -281,7 +281,7 @@ const labelStyle = {
                 </label>
                 <br />
                 <label htmlFor="contact" style={labelStyle}>
-                  Contact:
+                  Contacto:
                   <input
                     id="contact"
                     type="text"
@@ -298,11 +298,11 @@ const labelStyle = {
             <button type="submit" disabled={loading} style={buttonStyle}>
               {loading
                 ? isLogin
-                  ? "Logging in..."
-                  : "Signing up..."
+                  ? "Iniciando sesión..."
+                  : "Creando cuenta..."
                 : isLogin
-                ? "Login"
-                : "Sign Up"}
+                ? "Iniciar Sesión"
+                : "Crear Cuenta"}
             </button>
             <br />
             {isLogin && (
@@ -315,7 +315,7 @@ const labelStyle = {
                 disabled={loading}
                 style={{ ...buttonStyle, marginTop: "1rem" }}
               >
-                Forgot Password?
+                ¿Olvidaste tu contraseña?
               </button>
             )}
           </form>
@@ -325,7 +325,7 @@ const labelStyle = {
           <p
             style={{
               marginTop: "1rem",
-              color: errorMsg.startsWith("Signup successful") || errorMsg.startsWith("Password reset")
+              color: errorMsg.startsWith("¡Registro exitoso") || errorMsg.startsWith("¡Email de restablecimiento")
                 ? "green"
                 : "red",
               textAlign: "center",
@@ -340,7 +340,7 @@ const labelStyle = {
           disabled={loading}
           style={{ ...buttonStyle, marginTop: "1rem", width: "100%" }}
         >
-          Back to Homepage
+          Volver al Inicio
         </button>
       </div>
     </div>
