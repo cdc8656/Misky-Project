@@ -142,7 +142,7 @@ export default function App() {
       {user && (
         <div className="logout-container">
           <button className="primary-button" onClick={handleLogout}>
-            Logout
+            Terminar Session
           </button>
         </div>
       )}
