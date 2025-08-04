@@ -302,6 +302,30 @@ export const updateRestaurantItemImage = async (itemId, imageUrl, supabase) => {
   }
 };
 
+
+// get profile picture for restaurant item creation
+export const getProfilePicture = async (supabase) => {
+  const token = await getAccessToken(supabase);
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    const res = await axios.get(`${API_BASE_URL}/profile/picture`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data.profile_picture;
+  } catch (err) {
+    console.error("Error fetching profile picture:", err);
+    throw new Error(
+      err.response?.data?.detail || "Failed to fetch profile picture"
+    );
+  }
+};
+
+
+
+
 // Fetch notifications for the logged-in user (restaurant or customer)
 export const fetchNotifications = async (supabase) => {
   const token = await getAccessToken(supabase);
@@ -334,5 +358,50 @@ export const createNotification = async (supabase, notificationData) => {
   } catch (err) {
     console.error("Error creating notification:", err);
     throw new Error(err.response?.data?.detail || "Failed to create notification");
+  }
+};
+
+
+export const uploadProfilePicture = async (supabase, file, userId) => {
+  if (!file) throw new Error("No file provided");
+
+  const fileExt = file.name.split(".").pop();
+  const filePath = `item-images/${userId}-profile-${Date.now()}.${fileExt}`;
+
+  const { error } = await supabase.storage
+    .from("item-images")
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: true,
+    });
+
+  if (error) {
+    throw new Error("Failed to upload image: " + error.message);
+  }
+
+  const { data } = supabase.storage.from("item-images").getPublicUrl(filePath);
+  return data.publicUrl;
+};
+
+export const updateProfilePictureUrl = async (supabase, imageUrl) => {
+  const token = await getAccessToken(supabase);
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    const res = await axios.patch(
+      `${API_BASE_URL}/profile/picture`,
+      { profile_picture: imageUrl },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error updating profile picture URL:", err);
+    throw new Error(
+      err.response?.data?.detail || "Failed to update profile picture"
+    );
   }
 };

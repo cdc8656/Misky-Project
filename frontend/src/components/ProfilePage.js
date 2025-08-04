@@ -4,6 +4,8 @@ import { supabase } from "./supabaseClient";
 import {
   fetchUserProfile,
   updateUserProfile,
+  uploadProfilePicture,
+  updateProfilePictureUrl,
 } from "../api";
 
 export default function ProfilePage() {
@@ -14,6 +16,8 @@ export default function ProfilePage() {
   const [credForm, setCredForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -37,9 +41,26 @@ export default function ProfilePage() {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
     try {
-      await updateUserProfile(supabase, form);
+      let imageUrl = form.profile_picture;
+
+      if (imageFile) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        imageUrl = await uploadProfilePicture(supabase, imageFile, user.id);
+        await updateProfilePictureUrl(supabase, imageUrl);
+      }
+
+      await updateUserProfile(supabase, {
+        ...form,
+        profile_picture: imageUrl,
+      });
+
       setMessage("Perfil actualizado!");
+      setImageFile(null); // reset file input
+      fetchProfile(); // reload the profile info
     } catch (err) {
       setMessage(err.message || "Error en actualizar perfil.");
     } finally {
@@ -323,14 +344,12 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label style={styles.label}>URL de Foto de Perfil</label>
-              <input
-                type="url"
-                value={form.profile_picture || ""}
-                onChange={(e) =>
-                  setForm({ ...form, profile_picture: e.target.value })
-                }
-                style={styles.input}
+              <label style={styles.label}>Sube Foto de Perfil</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files[0])}
+                  style={styles.input}
                 onFocus={(e) => {
                   e.target.style.borderColor = "#3B38A0";
                   e.target.style.boxShadow = "0 0 0 3px rgba(59, 56, 160, 0.1)";

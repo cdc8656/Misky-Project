@@ -186,6 +186,56 @@ def update_restaurant_item(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+#get profile picture for restaurant item creation
+@app.get("/profile/picture")
+def get_profile_picture(authorization: str = Header(...)):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    user_id = get_user_id_from_jwt(jwt_token)
+    headers = get_auth_headers(jwt_token)
+
+    try:
+        with httpx.Client() as client:
+            response = client.get(
+                f"{SUPABASE_URL}/rest/v1/profiles",
+                headers=headers,
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "select": "profile_picture"
+                },
+            )
+            response.raise_for_status()
+            data = response.json()
+            if not data:
+                raise HTTPException(status_code=404, detail="Profile not found")
+            return {"profile_picture": data[0]["profile_picture"]}
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.patch("/profile/picture")
+def update_profile_picture(payload: dict, authorization: str = Header(...)):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    user_id = get_user_id_from_jwt(jwt_token)
+    headers = get_auth_headers(jwt_token)
+
+    try:
+        # Update profile picture URL in profile table
+        with httpx.Client() as client:
+            response = client.patch(
+                f"{SUPABASE_URL}/rest/v1/profiles?user_id=eq.{user_id}",
+                headers=headers,
+                json={"profile_picture": payload["profile_picture"]},
+            )
+            response.raise_for_status()
+            return response.json()[0]
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 #Get all reservations
 @app.get("/reservations")
 def get_reservations(

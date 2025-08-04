@@ -5,8 +5,7 @@ import {
   fetchRestaurantItems,
   createRestaurantItem,
   fetchNotifications,
-  uploadItemImage,
-  updateRestaurantItemImage,
+  getProfilePicture,
   cancelRestaurantItem,
   completeRestaurantItem,
 } from "../api.js";
@@ -17,7 +16,6 @@ export default function RestaurantDashboard({ user }) {
     pickup_time: "",
     total_spots: "",
     price: "",
-    image: null,
   });
 
   const [items, setItems] = useState([]);
@@ -26,6 +24,7 @@ export default function RestaurantDashboard({ user }) {
   const [error, setError] = useState(null);
   const [showOffers, setShowOffers] = useState(true);
   const [showNotifications, setShowNotifications] = useState(true);
+  const [profilePicture, setProfilePicture] = useState(null);
 
   const loadItems = async () => {
     if (!user?.id) {
@@ -41,6 +40,15 @@ export default function RestaurantDashboard({ user }) {
       setError(err.message || "Failed to fetch items");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadProfilePicture = async () => {
+    try {
+      const pictureUrl = await getProfilePicture(supabase);
+      setProfilePicture(pictureUrl || null);
+    } catch (err) {
+      console.error("Failed to load profile picture:", err.message);
     }
   };
 
@@ -67,6 +75,7 @@ export default function RestaurantDashboard({ user }) {
 
     loadItems();
     loadNotifications();
+    loadProfilePicture();
 
     const channel = supabase
       .channel("restaurant-notifications")
@@ -90,18 +99,11 @@ export default function RestaurantDashboard({ user }) {
   }, [user?.id]);
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "image") {
-      setForm((prev) => ({
-        ...prev,
-        image: files?.[0] || null,
-      }));
-    } else {
-      setForm((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -114,7 +116,8 @@ export default function RestaurantDashboard({ user }) {
       pickup_time: form.pickup_time,
       total_spots: parseInt(form.total_spots, 10),
       price: parseFloat(form.price),
-      status: "active"
+      status: "active",
+      image_url: profilePicture,
     };
 
     try {
@@ -125,19 +128,7 @@ export default function RestaurantDashboard({ user }) {
         throw new Error("Invalid response from createRestaurantItem");
       }
 
-      if (form.image && form.image instanceof File) {
-        const imageUrl = await uploadItemImage(supabase, form.image, newItem.id);
-
-        console.log("Uploaded image URL:", imageUrl);
-
-        // Patch item with image URL
-        await updateRestaurantItemImage(newItem.id, imageUrl, supabase);
-
-        // Reload items to reflect image_url update
-        await loadItems();
-      } else {
-        await loadItems();
-      }
+      await loadItems();
 
       alert("Offer created successfully!");
       setForm({
@@ -538,13 +529,6 @@ return (
           e.target.style.borderColor = "#e5e7eb";
           e.target.style.boxShadow = "none";
         }}
-      />
-      <input
-        type="file"
-        name="image"
-        accept="image/*"
-        onChange={handleChange}
-        style={{...styles.input, padding: "8px 12px"}}
       />
       <button
         type="submit"
