@@ -1,6 +1,6 @@
 import axios from "axios"; //alows for HTTP requests to be made to FastAPI backend.
 
-export const API_BASE_URL = "http://localhost:8000"; //Local testing
+export const API_BASE_URL = "https://misky-project.onrender.com"; //base URL of FastAPI backend
 //"http://localhost:8000"; //Local testing
 //"https://misky-project.onrender.com"; //base URL of FastAPI backend
 
