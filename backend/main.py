@@ -158,9 +158,9 @@ def update_restaurant_item(
             res.raise_for_status()
             items = res.json()
             if not items:
-                raise HTTPException(status_code=404, detail="Item not found")
+                raise HTTPException(status_code=404, detail="Oferta no acesible!")
             if items[0]["restaurant_id"] != user_id:
-                raise HTTPException(status_code=403, detail="Not authorized to update this item")
+                raise HTTPException(status_code=403, detail="No tienes autorizacion para actualizar la oferta")
 
             # 2. PATCH the item with update_data
             patch_res = client.patch(
@@ -172,7 +172,7 @@ def update_restaurant_item(
             # Supabase returns a list of updated rows (usually one element)
             updated_items = patch_res.json()
             if not updated_items:
-                raise HTTPException(status_code=500, detail="Failed to update item")
+                raise HTTPException(status_code=500, detail="Error en actualizar oferta!")
             return updated_items[0]  # Return updated item object
 
     except httpx.HTTPStatusError as e:
@@ -250,7 +250,7 @@ def create_reservation(
             if rpc_response.status_code >= 400:
                 raise HTTPException(
                     status_code=rpc_response.status_code,
-                    detail="Reservation created but failed to update item count",
+                    detail="Reservacion creada pero hubo un error en actualizar el numero de ofertas",
                 )
 
             return response.json()# Return reservation data to frontend
@@ -341,15 +341,15 @@ def cancel_reservation(
             data = res.json()
 
             if not data:
-                raise HTTPException(status_code=404, detail="Reservation not found.")
+                raise HTTPException(status_code=404, detail="Error en encontrar la reservacion!")
 
             reservation = data[0]
 
             if reservation["customer_id"] != user_id:
-                raise HTTPException(status_code=403, detail="You do not own this reservation.")
+                raise HTTPException(status_code=403, detail="Error en actualizar reservacion!")
 
             if reservation["status"] == "cancelled":
-                raise HTTPException(status_code=400, detail="Reservation already cancelled.")
+                raise HTTPException(status_code=400, detail="La reservacion ya fue cancelada!")
 
             item_id = reservation["item_id"]
 
@@ -379,7 +379,7 @@ def cancel_reservation(
             item_data = item_res.json()
 
             if not item_data:
-                raise HTTPException(status_code=404, detail="Associated item not found.")
+                raise HTTPException(status_code=404, detail="Oferta no encontrada!")
 
             item = item_data[0]
             restaurant_id = item["restaurant_id"]
@@ -390,7 +390,7 @@ def cancel_reservation(
                 "restaurant_id": restaurant_id,
                 "reservation_id": str(reservation_id),
                 "type": "cancel",
-                "message": f"Reservation for '{item_info}' was cancelled by a customer.",
+                "message": f"Reservacion para '{item_info}'fue cancelada por un cliente.",
                 "customer_id": user_id
             }
             notif_response = client.post(
@@ -400,7 +400,7 @@ def cancel_reservation(
             )
             notif_response.raise_for_status()
 
-            return {"success": True, "message": "Reservation cancelled, count updated, and restaurant notified."}
+            return {"success": True, "message": "Reservacion cancelada!"}
 
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
@@ -433,14 +433,14 @@ def confirm_reservation(
             data = res.json()
 
             if not data:
-                raise HTTPException(status_code=404, detail="Reservation not found.")
+                raise HTTPException(status_code=404, detail="Reservacion no encontrada!")
             reservation = data[0]
 
             if reservation["customer_id"] != user_id:
-                raise HTTPException(status_code=403, detail="You do not own this reservation.")
+                raise HTTPException(status_code=403, detail="No tienes autorizacion para editar la reservacion!")
 
             if reservation["status"] == "completed":
-                raise HTTPException(status_code=400, detail="Reservation already completed.")
+                raise HTTPException(status_code=400, detail="Reservacion ya fue completada!")
 
             # Step 2: Confirm the reservation
             patch_response = client.patch(
@@ -450,7 +450,7 @@ def confirm_reservation(
             )
             patch_response.raise_for_status()
 
-            return {"success": True, "message": "Reservation completed."}
+            return {"success": True, "message": "Reservacion completada!"}
 
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
@@ -476,11 +476,11 @@ def get_notifications(authorization: str = Header(...)):
             profile_data = profile_res.json()
 
             if not profile_data:
-                raise HTTPException(status_code=404, detail="Profile not found")
+                raise HTTPException(status_code=404, detail="Perfil no encontrado!")
 
             role = profile_data[0].get("role")
             if role not in ("restaurant", "customer"):
-                raise HTTPException(status_code=400, detail="Invalid role in profile")
+                raise HTTPException(status_code=400, detail="Error en escojer tipo de usario!")
 
             # Role-specific filters
             filter_key = "restaurant_id" if role == "restaurant" else "customer_id"
@@ -522,9 +522,9 @@ def cancel_item(
             item_res.raise_for_status()
             item_data = item_res.json()
             if not item_data:
-                raise HTTPException(status_code=404, detail="Item not found.")
+                raise HTTPException(status_code=404, detail="Oferta no acesible!")
             if item_data[0]["restaurant_id"] != restaurant_id:
-                raise HTTPException(status_code=403, detail="Not authorized to cancel this item.")
+                raise HTTPException(status_code=403, detail="No tienes autorizacion para cancelar la oferta!")
 
             item_info = item_data[0]["information"]
 
@@ -545,7 +545,7 @@ def cancel_item(
             reservation_res.raise_for_status()
             reservations = reservation_res.json()
 
-            print("Found reservations:", reservations)  # ADD THIS
+            print("Found reservations:", reservations) #DEBUG STUFF
 
                 # 4. Cancel each reservation + notify customer
             for resv in reservations:
@@ -569,13 +569,13 @@ def cancel_item(
                         "restaurant_id": restaurant_id,
                         "reservation_id": str(resv_id),
                         "type": "cancel",
-                        "message": f"Item '{item_info}' was cancelled by the restaurant.",
+                        "message": f"La siguiente oferta fue cancelada: '{item_info}'.",
                         "customer_id": customer_id
                     },
                 )
                 notif_res.raise_for_status()
 
-            return {"success": True, "message": f"Item '{item_info}' cancelled and customers notified."}
+            return {"success": True, "message": f"La siguiente oferta fue cancelada y se ha notificado al cliente: '{item_info}'."}
 
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
@@ -605,9 +605,9 @@ def cancel_item(
             item_res.raise_for_status()
             item_data = item_res.json()
             if not item_data:
-                raise HTTPException(status_code=404, detail="Item not found.")
+                raise HTTPException(status_code=404, detail="Oferta no acesible!")
             if item_data[0]["restaurant_id"] != restaurant_id:
-                raise HTTPException(status_code=403, detail="Not authorized to complete this item.")
+                raise HTTPException(status_code=403, detail="No tienes autorizacion para completar esta oferta!")
 
             item_info = item_data[0]["information"]
 
@@ -652,13 +652,13 @@ def cancel_item(
                         "restaurant_id": restaurant_id,
                         "reservation_id": str(resv_id),
                         "type": "confirm",
-                        "message": f"Item '{item_info}' was completed by the restaurant.",
+                        "message": f"La oferta siguiente fue completada por el restuarante: '{item_info}'.",
                         "customer_id": customer_id
                     },
                 )
                 notif_res.raise_for_status()
 
-            return {"success": True, "message": f"Item '{item_info}' completed and customers notified."}
+            return {"success": True, "message": f"La oferta siguiente fue completada y fue avisado el cliente: '{item_info}'."}
 
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
@@ -681,7 +681,7 @@ def get_profile(authorization: str = Header(...)):
             res.raise_for_status()
             data = res.json()
             if not data:
-                raise HTTPException(status_code=404, detail="Profile not found.")
+                raise HTTPException(status_code=404, detail="Perfil no ubicado.")
             return data[0]
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
@@ -705,7 +705,7 @@ def update_profile(payload: dict, authorization: str = Header(...)):
                 json=payload,
             )
             res.raise_for_status()
-            return {"success": True, "message": "Profile updated successfully."}
+            return {"success": True, "message": "Perfil actualizado!"}
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:

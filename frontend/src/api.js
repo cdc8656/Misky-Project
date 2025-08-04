@@ -94,7 +94,7 @@ export const createReservation = async (supabase, payload) => {
   //Logs and throws an error message if the reservation creation fails
   catch (err) {
     console.error("Error creating reservation:", err);
-    throw new Error(err.response?.data?.detail || "Failed to create reservation");
+    throw new Error(err.response?.data?.detail || "Error en crear reservacion!");
   }
 };
 
