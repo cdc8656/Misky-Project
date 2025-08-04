@@ -91,7 +91,6 @@ export default function AuthForm({ type = "login", onAuth, supabase }) {
       }
     } catch (err) {
       setErrorMsg("Error inesperado durante el registro.");
-      console.error(err);
     } finally {
       setLoading(false);
     }
