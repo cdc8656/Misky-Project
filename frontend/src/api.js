@@ -1,6 +1,6 @@
 import axios from "axios"; //alows for HTTP requests to be made to FastAPI backend.
 
-export const API_BASE_URL = "https://misky-project.onrender.com"; //base URL of FastAPI backend
+export const API_BASE_URL = "http://localhost:8000"; //Local testing
 //"http://localhost:8000"; //Local testing
 //"https://misky-project.onrender.com"; //base URL of FastAPI backend
 
@@ -25,7 +25,7 @@ export const getAccessToken = async (supabase) => { //supabase.auth.getSession()
 // Fetch the profile of the logged-in user
 export const fetchUserProfile = async (supabase) => {
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.get(`${API_BASE_URL}/profile`, {
@@ -34,14 +34,14 @@ export const fetchUserProfile = async (supabase) => {
     return res.data;
   } catch (err) {
     console.error("Error fetching profile:", err);
-    throw new Error(err.response?.data?.detail || "Failed to fetch profile");
+    throw new Error(err.response?.data?.detail || "Error en encontrar perfil");
   }
 };
 
 // Update profile information (name, location, contact, picture)
 export const updateUserProfile = async (supabase, profileData) => {
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.patch(`${API_BASE_URL}/profile`, profileData, {
@@ -53,7 +53,7 @@ export const updateUserProfile = async (supabase, profileData) => {
     return res.data;
   } catch (err) {
     console.error("Error updating profile:", err);
-    throw new Error(err.response?.data?.detail || "Failed to update profile");
+    throw new Error(err.response?.data?.detail || "Error en actualizar perfil");
   }
 };
 
@@ -64,7 +64,7 @@ export const updateUserProfile = async (supabase, profileData) => {
 export const fetchItems = async (supabase) => {
   //Gets the access token. If the user is not logged in, throws an error
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.get(`${API_BASE_URL}/items`, { // Make a GET request to the /items route in FastAPI backend
@@ -75,34 +75,42 @@ export const fetchItems = async (supabase) => {
   //If the request fails, logs the error and throws a readable error 
   catch (err) {
     console.error("Error fetching items:", err);
-    throw new Error(err.response?.data?.detail || "Failed to fetch items");
+    throw new Error(err.response?.data?.detail || "Error encontrando oferta");
   }
 };
 
 // Create a reservation
 export const createReservation = async (supabase, payload) => {
-  //Gets the access token. If the user is not logged in, throws an error
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
-    const res = await axios.post(`${API_BASE_URL}/reservations`, payload, { //Sends a POST request to /reservations with the reservation data in the body
+    // Log the payload for debugging (optional, remove in production)
+    console.log("Sending reservation payload:", payload);
+
+    // Ensure quantity is sent — fallback to 1 if not provided
+    const fullPayload = {
+      ...payload,
+      quantity: payload.quantity || 1,
+    };
+
+    const res = await axios.post(`${API_BASE_URL}/reservations`, fullPayload, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return res.data; //Returns the data from the response
-  } 
-  //Logs and throws an error message if the reservation creation fails
-  catch (err) {
+
+    return res.data;
+  } catch (err) {
     console.error("Error creating reservation:", err);
-    throw new Error(err.response?.data?.detail || "Error en crear reservacion!");
+    throw new Error(err.response?.data?.detail || "Error en crear reservación!");
   }
 };
+
 
 // Get user reservations
 export const fetchReservations = async (supabase) => {
   //Gets the access token. If the user is not logged in, throws an error
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.get(`${API_BASE_URL}/reservations`, { //Make a GET request /reservations to retrieve reservations for the authenticated user.
@@ -113,7 +121,7 @@ export const fetchReservations = async (supabase) => {
   // Logs and throws an error message if the reservation creation fails
   catch (err) {
     console.error("Error fetching reservations:", err);
-    throw new Error(err.response?.data?.detail || "Failed to fetch reservations");
+    throw new Error(err.response?.data?.detail || "Error encontrando reservación");
   }
 };
 
@@ -134,7 +142,7 @@ export const cancelReservation = async (supabase, reservation_id) => {
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.detail || "Cancel failed.");
+    throw new Error(errorData.detail || "Error en cancelar.");
   }
 
   return await response.json();
@@ -146,7 +154,7 @@ export const completeReservation = async (supabase, reservation_id) => {
   const session = await supabase.auth.getSession();
   const token = session.data?.session?.access_token;
 
-  if (!token) throw new Error("No auth token found.");
+  if (!token) throw new Error("No se encontró el token de autenticación.");
 
   const response = await fetch(`${API_BASE_URL}/reservations/${reservation_id}/complete`, {
     method: "PATCH",
@@ -158,7 +166,7 @@ export const completeReservation = async (supabase, reservation_id) => {
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.detail || "Completion failed.");
+    throw new Error(errorData.detail || "Error en completar.");
   }
 
   return await response.json();
@@ -173,7 +181,7 @@ export const completeReservation = async (supabase, reservation_id) => {
 // Fetch items created by the logged-in restaurant
 export const fetchRestaurantItems = async (supabase) => {
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.get(`${API_BASE_URL}/restaurant/items`, {
@@ -182,14 +190,14 @@ export const fetchRestaurantItems = async (supabase) => {
     return res.data;
   } catch (err) {
     console.error("Error fetching restaurant items:", err);
-    throw new Error(err.response?.data?.detail || "Failed to fetch restaurant items");
+    throw new Error(err.response?.data?.detail || "Error encontrando oferta");
   }
 };
 
 // Create a new food offer by the restaurant
 export const createRestaurantItem = async (supabase, itemData) => {
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.post(`${API_BASE_URL}/restaurant/items`, itemData, {
@@ -206,14 +214,14 @@ export const createRestaurantItem = async (supabase, itemData) => {
     return res.data;
   } catch (err) {
     console.error("Error creating restaurant item:", err);
-    throw new Error(err.response?.data?.detail || "Failed to create item");
+    throw new Error(err.response?.data?.detail || "Error creando oferta");
   }
 };
 
 // Cancel a restaurant item
 export const cancelRestaurantItem = async (supabase, itemId) => {
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.patch(
@@ -229,14 +237,14 @@ export const cancelRestaurantItem = async (supabase, itemId) => {
     return res.data;
   } catch (err) {
     console.error("Error canceling restaurant item:", err);
-    throw new Error(err.response?.data?.detail || "Failed to cancel item");
+    throw new Error(err.response?.data?.detail || "Error en cancelar oferta");
   }
 };
 
 // Complete a restaurant item
 export const completeRestaurantItem = async (supabase, itemId) => {
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.patch(
@@ -252,14 +260,14 @@ export const completeRestaurantItem = async (supabase, itemId) => {
     return res.data;
   } catch (err) {
     console.error("Error completing restaurant item:", err);
-    throw new Error(err.response?.data?.detail || "Failed to complete item");
+    throw new Error(err.response?.data?.detail || "Error en completar oferta");
   }
 };
 
 
 // Upload an image to Supabase Storage and return its public URL
 export const uploadItemImage = async (supabase, file, itemId) => {
-  if (!file) throw new Error("No file provided");
+  if (!file) throw new Error("Error encontrando archivo");
 
   const fileExt = file.name.split(".").pop();
   const filePath = `item-images/${itemId}-${Date.now()}.${fileExt}`;
@@ -272,7 +280,7 @@ export const uploadItemImage = async (supabase, file, itemId) => {
     });
 
   if (error) {
-    throw new Error("Failed to upload image: " + error.message);
+    throw new Error("Error en subir imagen: " + error.message);
   }
 
   const { data } = supabase.storage.from("item-images").getPublicUrl(filePath);
@@ -282,7 +290,7 @@ export const uploadItemImage = async (supabase, file, itemId) => {
 // Update the restaurant item with the uploaded image URL
 export const updateRestaurantItemImage = async (itemId, imageUrl, supabase) => {
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.patch(
@@ -298,7 +306,7 @@ export const updateRestaurantItemImage = async (itemId, imageUrl, supabase) => {
     return res.data;
   } catch (err) {
     console.error("Error updating restaurant item image:", err);
-    throw new Error(err.response?.data?.detail || "Failed to update item image");
+    throw new Error(err.response?.data?.detail || "Errors actualizando imagen");
   }
 };
 
@@ -306,7 +314,7 @@ export const updateRestaurantItemImage = async (itemId, imageUrl, supabase) => {
 // get profile picture for restaurant item creation
 export const getProfilePicture = async (supabase) => {
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.get(`${API_BASE_URL}/profile/picture`, {
@@ -329,7 +337,7 @@ export const getProfilePicture = async (supabase) => {
 // Fetch notifications for the logged-in user (restaurant or customer)
 export const fetchNotifications = async (supabase) => {
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.get(`${API_BASE_URL}/notifications`, {
@@ -338,14 +346,14 @@ export const fetchNotifications = async (supabase) => {
     return res.data; // returns array of notifications
   } catch (err) {
     console.error("Error fetching notifications:", err);
-    throw new Error(err.response?.data?.detail || "Failed to fetch notifications");
+    throw new Error(err.response?.data?.detail || "Error encontrando notificación");
   }
 };
 
 // (Optional) Create a notification (mostly for admin/testing purposes)
 export const createNotification = async (supabase, notificationData) => {
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.post(`${API_BASE_URL}/notifications`, notificationData, {
@@ -357,7 +365,7 @@ export const createNotification = async (supabase, notificationData) => {
     return res.data;
   } catch (err) {
     console.error("Error creating notification:", err);
-    throw new Error(err.response?.data?.detail || "Failed to create notification");
+    throw new Error(err.response?.data?.detail || "Error en crear notificación");
   }
 };
 
@@ -385,7 +393,7 @@ export const uploadProfilePicture = async (supabase, file, userId) => {
 
 export const updateProfilePictureUrl = async (supabase, imageUrl) => {
   const token = await getAccessToken(supabase);
-  if (!token) throw new Error("Not authenticated");
+  if (!token) throw new Error("No autenticado");
 
   try {
     const res = await axios.patch(

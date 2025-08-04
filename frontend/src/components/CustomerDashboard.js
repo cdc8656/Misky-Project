@@ -23,6 +23,7 @@ export default function CustomerDashboard({ user }) { //main react component
   const [showOffers, setShowOffers] = useState(true);
   const [showReservations, setShowReservations] = useState(true);
   const [showNotifications, setShowNotifications] = useState(true);
+  const [selectedQuantities, setSelectedQuantities] = useState({});
 
   // Load available items from backend
   const loadItems = async () => {
@@ -111,8 +112,8 @@ export default function CustomerDashboard({ user }) { //main react component
   
 
   // Make a reservation
-  const reserve = async (item_id) => { // Called when the user clicks the Reserve button for a food item
-    if (!user?.id) { //check to prevent unauthorized access
+  const reserve = async (item_id) => {
+    if (!user?.id) {
       alert("You are not logged in.");
       return;
     }
@@ -121,31 +122,38 @@ export default function CustomerDashboard({ user }) { //main react component
     setError("");
 
     try {
+      const quantity = selectedQuantities[item_id] || 1; // get selected quantity or default to 1
 
-      //Build a payload object to send to backend
+      // Build payload
       const payload = {
         customer_id: user.id,
         item_id,
+        quantity,             
         timestamp: new Date().toISOString(),
         status: "active",
       };
 
-      //createReservation() sends a POST to your FastAPI backend with a bearer token
-      await createReservation(supabase, payload); 
+      await createReservation(supabase, payload);
 
-      alert("Reservation created!"); //success popup
+      alert("Reservation created!");
 
-      //Re-fetch reservations and item counts to reflect the new state (update whats shown on dashboard)
-      await loadReservations(); 
+      await loadReservations();
       await loadItems();
 
-    // handle errors
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to create reservation.");
     } finally {
       setLoading(false);
     }
+  };
+
+  //handler to update quantity selection for an item
+  const handleQuantityChange = (item_id, value) => {
+    setSelectedQuantities(prev => ({
+      ...prev,
+      [item_id]: Number(value),
+    }));
   };
 
 
@@ -210,8 +218,12 @@ const complete = async (reservation_id) => {
 
   //Filter items based on search input
   const filteredItems = items
-    .filter(item => (item.total_spots - (item.num_of_reservations || 0)) > 0)
-    .filter(item => (item.status == "active"))
+    .map(item => ({
+      ...item,
+      available: item.total_spots - (item.num_of_reservations || 0)
+    }))
+    .filter(item => item.available > 0)
+    .filter(item => item.status === "active")
     .filter(item =>
       item.information.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.location.toLowerCase().includes(searchTerm.toLowerCase())
@@ -406,11 +418,7 @@ return (
     <div style={styles.content}>
       {/* Header Section */}
       <div style={styles.header}>
-        <img
-          src="/Misky Logo.png"
-          alt="Misky Logo"
-          style={styles.logo}
-        />
+        <img src="/Misky Logo.png" alt="Misky Logo" style={styles.logo} />
 
         <h1 style={styles.title}>Panel de Cliente</h1>
 
@@ -434,21 +442,17 @@ return (
 
       {/* Messages */}
       {error && (
-        <div style={{...styles.message, ...styles.errorMessage}}>
-          {error}
-        </div>
+        <div style={{ ...styles.message, ...styles.errorMessage }}>{error}</div>
       )}
       {loading && (
-        <div style={{...styles.message, ...styles.loadingMessage}}>
+        <div style={{ ...styles.message, ...styles.loadingMessage }}>
           Procesando reserva…
         </div>
       )}
 
       {/* Search Section */}
-      <h2 style={styles.sectionTitle}>
-        🔍 Buscar Ofertas
-      </h2>
-      
+      <h2 style={styles.sectionTitle}>🔍 Buscar Ofertas</h2>
+
       <input
         type="text"
         placeholder="Busca comida o ubicación del restaurante..."
@@ -466,17 +470,22 @@ return (
       />
 
       {/* Available Food Offers */}
-      <h3
-        style={styles.sectionTitle}
-        onClick={() => setShowOffers(!showOffers)}
-      >
+      <h3 style={styles.sectionTitle} onClick={() => setShowOffers(!showOffers)}>
         {showOffers ? "▼" : "▶"} 🍽️ Ofertas Disponibles
       </h3>
       {showOffers && (
         <>
           {filteredItems.length === 0 ? (
-            <div style={{...styles.card, textAlign: "center", justifyContent: "center"}}>
-              <p style={{color: "#6b6b6b", margin: 0}}>No hay ofertas de comida disponibles en este momento.</p>
+            <div
+              style={{
+                ...styles.card,
+                textAlign: "center",
+                justifyContent: "center",
+              }}
+            >
+              <p style={{ color: "#6b6b6b", margin: 0 }}>
+                No hay ofertas de comida disponibles en este momento.
+              </p>
             </div>
           ) : (
             <div style={styles.grid}>
@@ -486,11 +495,13 @@ return (
                   style={styles.card}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.15)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.15)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1)";
+                    e.currentTarget.style.boxShadow =
+                      "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1)";
                   }}
                 >
                   {item.image_url && (
@@ -504,15 +515,48 @@ return (
                   <div style={styles.cardContent}>
                     <h4 style={styles.cardTitle}>{item.information}</h4>
                     <p style={styles.cardText}>
-                      <strong>Recojo:</strong> {new Date(item.pickup_time).toLocaleString()}
+                      <strong>Recojo:</strong>{" "}
+                      {new Date(item.pickup_time).toLocaleString()}
                     </p>
                     <p style={styles.cardText}>
-                      <strong>Precio:</strong> <b>S/.</b>{item.price.toFixed(2)} &nbsp;&nbsp;
-                      <strong>Disponibles:</strong> {item.total_spots - (item.num_of_reservations || 0)}
+                      <strong>Precio:</strong> <b>S/.</b> {item.price.toFixed(2)}{" "}
+                      &nbsp;&nbsp;
+                      <strong>Disponibles:</strong>{" "}
+                      {item.total_spots - (item.num_of_reservations || 0)}
                     </p>
                     <p style={styles.cardText}>
                       <strong>Ubicación:</strong> {item.location}
                     </p>
+                    <label
+                      htmlFor={`quantity-select-${item.id}`}
+                      style={{ marginRight: 8, fontWeight: "600" }}
+                    >
+                      Cantidad:
+                    </label>
+                    <select
+                      id={`quantity-select-${item.id}`}
+                      value={selectedQuantities[item.id] || 1}
+                      onChange={(e) =>
+                        handleQuantityChange(item.id, e.target.value)
+                      }
+                      disabled={loading}
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: "8px",
+                        border: "1px solid #ccc",
+                        marginBottom: "12px",
+                        fontSize: "1rem",
+                        width: "70px",
+                      }}
+                    >
+                      {[...Array(item.total_spots - (item.num_of_reservations || 0)).keys()].map(
+                        (i) => (
+                          <option key={i + 1} value={i + 1}>
+                            {i + 1}
+                          </option>
+                        )
+                      )}
+                    </select>
                     <button
                       disabled={loading}
                       onClick={() => reserve(item.id)}
@@ -524,13 +568,15 @@ return (
                         if (!loading) {
                           e.target.style.backgroundColor = "#5A56C4";
                           e.target.style.transform = "translateY(-1px)";
-                          e.target.style.boxShadow = "0 4px 12px rgba(59, 56, 160, 0.4)";
+                          e.target.style.boxShadow =
+                            "0 4px 12px rgba(59, 56, 160, 0.4)";
                         }
                       }}
                       onMouseLeave={(e) => {
                         e.target.style.backgroundColor = "#3B38A0";
                         e.target.style.transform = "translateY(0)";
-                        e.target.style.boxShadow = "0 2px 8px rgba(59, 56, 160, 0.3)";
+                        e.target.style.boxShadow =
+                          "0 2px 8px rgba(59, 56, 160, 0.3)";
                       }}
                     >
                       Reservar
@@ -553,8 +599,16 @@ return (
       {showReservations && (
         <>
           {reservations.length === 0 ? (
-            <div style={{...styles.card, textAlign: "center", justifyContent: "center"}}>
-              <p style={{color: "#6b6b6b", margin: 0}}>Aún no tienes reservas.</p>
+            <div
+              style={{
+                ...styles.card,
+                textAlign: "center",
+                justifyContent: "center",
+              }}
+            >
+              <p style={{ color: "#6b6b6b", margin: 0 }}>
+                Aún no tienes reservas.
+              </p>
             </div>
           ) : (
             <div style={styles.grid}>
@@ -564,85 +618,126 @@ return (
                   style={styles.card}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.15)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.15)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1)";
+                    e.currentTarget.style.boxShadow =
+                      "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1)";
                   }}
                 >
                   <div style={styles.cardContent}>
-                    <h4 style={styles.cardTitle}>{r.item.information}</h4>
-                    <p style={styles.cardText}>
-                      <strong>Hora de recojo:</strong> {new Date(r.item.pickup_time).toLocaleString()}
-                    </p>
-                    <p style={styles.cardText}>
-                      <strong>Precio:</strong> <b>S/.</b>{r.item.price.toFixed(2)}
-                    </p>
-                    <p style={styles.cardText}>
-                      <strong>Ubicación:</strong> {r.item.location}
-                    </p>
-                    <p style={{...styles.cardText, marginBottom: "16px"}}>
-                      <strong>Estado:</strong> <span style={{
-                        backgroundColor: r.status === "active" ? "#10B981" : "#6B7280",
-                        color: "white",
-                        padding: "4px 8px",
-                        borderRadius: "8px",
-                        fontSize: "0.85rem",
-                        fontWeight: "600"
-                      }}>{r.status === "active" ? "activa" : r.status === "completed" ? "completada" : "cancelada"}</span>
-                    </p>
-
-                    {r.status === "active" && (
-                      <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
-                        <button
-                          disabled={loading}
-                          onClick={() => cancel(r.id)}
+                    <div
+                      style={{ display: "flex", gap: "20px", alignItems: "center" }}
+                    >
+                      {r.item.image_url && (
+                        <img
+                          src={r.item.image_url}
+                          alt={r.item.information}
                           style={{
-                            ...styles.buttonSecondary,
-                            opacity: loading ? 0.6 : 1,
+                            width: 120,
+                            height: 120,
+                            objectFit: "cover",
+                            borderRadius: 12,
+                            flexShrink: 0,
                           }}
-                          onMouseEnter={(e) => {
-                            if (!loading) {
-                              e.target.style.backgroundColor = "#B91C1C";
-                              e.target.style.transform = "translateY(-1px)";
-                              e.target.style.boxShadow = "0 4px 12px rgba(220, 38, 38, 0.4)";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = "#DC2626";
-                            e.target.style.transform = "translateY(0)";
-                            e.target.style.boxShadow = "0 2px 8px rgba(220, 38, 38, 0.3)";
-                          }}
-                        >
-                          Cancelar
-                        </button>
+                        />
+                      )}
+                      <div style={{ flex: 1, color: "#1a1a1a" }}>
+                        <h4 style={styles.cardTitle}>{r.item.information}</h4>
+                        <p style={styles.cardText}>
+                          <strong>Cantidad:</strong> {r.quantity}
+                        </p>
+                        <p style={styles.cardText}>
+                          <strong>Hora de recojo:</strong>{" "}
+                          {new Date(r.item.pickup_time).toLocaleString()}
+                        </p>
+                        <p style={styles.cardText}>
+                          <strong>Precio:</strong> <b>S/.</b> {r.item.price.toFixed(2)}
+                        </p>
+                        <p style={styles.cardText}>
+                          <strong>Ubicación:</strong> {r.item.location}
+                        </p>
+                        <p style={{ ...styles.cardText, marginBottom: "16px" }}>
+                          <strong>Estado:</strong>{" "}
+                          <span
+                            style={{
+                              backgroundColor:
+                                r.status === "active" ? "#10B981" : "#6B7280",
+                              color: "white",
+                              padding: "4px 8px",
+                              borderRadius: "8px",
+                              fontSize: "0.85rem",
+                              fontWeight: "600",
+                            }}
+                          >
+                            {r.status === "active"
+                              ? "activa"
+                              : r.status === "completed"
+                              ? "completada"
+                              : "cancelada"}
+                          </span>
+                        </p>
 
-                        <button
-                          disabled={loading}
-                          onClick={() => complete(r.id)}
-                          style={{
-                            ...styles.button,
-                            opacity: loading ? 0.6 : 1,
-                            margin: 0,
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!loading) {
-                              e.target.style.backgroundColor = "#5A56C4";
-                              e.target.style.transform = "translateY(-1px)";
-                              e.target.style.boxShadow = "0 4px 12px rgba(59, 56, 160, 0.4)";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = "#3B38A0";
-                            e.target.style.transform = "translateY(0)";
-                            e.target.style.boxShadow = "0 2px 8px rgba(59, 56, 160, 0.3)";
-                          }}
-                        >
-                          Confirmar Recojo
-                        </button>
+                        {r.status === "active" && (
+                          <div
+                            style={{ display: "flex", gap: "12px", marginTop: "16px" }}
+                          >
+                            <button
+                              disabled={loading}
+                              onClick={() => cancel(r.id)}
+                              style={{
+                                ...styles.buttonSecondary,
+                                opacity: loading ? 0.6 : 1,
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!loading) {
+                                  e.target.style.backgroundColor = "#B91C1C";
+                                  e.target.style.transform = "translateY(-1px)";
+                                  e.target.style.boxShadow =
+                                    "0 4px 12px rgba(220, 38, 38, 0.4)";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = "#DC2626";
+                                e.target.style.transform = "translateY(0)";
+                                e.target.style.boxShadow =
+                                  "0 2px 8px rgba(220, 38, 38, 0.3)";
+                              }}
+                            >
+                              Cancelar
+                            </button>
+
+                            <button
+                              disabled={loading}
+                              onClick={() => complete(r.id)}
+                              style={{
+                                ...styles.button,
+                                opacity: loading ? 0.6 : 1,
+                                margin: 0,
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!loading) {
+                                  e.target.style.backgroundColor = "#5A56C4";
+                                  e.target.style.transform = "translateY(-1px)";
+                                  e.target.style.boxShadow =
+                                    "0 4px 12px rgba(59, 56, 160, 0.4)";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = "#3B38A0";
+                                e.target.style.transform = "translateY(0)";
+                                e.target.style.boxShadow =
+                                  "0 2px 8px rgba(59, 56, 160, 0.3)";
+                              }}
+                            >
+                              Confirmar Recojo
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -661,17 +756,26 @@ return (
       {showNotifications && (
         <>
           {notifications.length === 0 ? (
-            <div style={{...styles.card, textAlign: "center", justifyContent: "center"}}>
-              <p style={{color: "#6b6b6b", margin: 0}}>No tienes notificaciones aún.</p>
+            <div
+              style={{
+                ...styles.card,
+                textAlign: "center",
+                justifyContent: "center",
+              }}
+            >
+              <p style={{ color: "#6b6b6b", margin: 0 }}>
+                No tienes notificaciones aún.
+              </p>
             </div>
           ) : (
-            <div style={{ display: "grid", gap: "12px", marginBottom: "48px" }}>
+            <div
+              style={{ display: "grid", gap: "12px", marginBottom: "48px" }}
+            >
               {notifications.map((note) => (
-                <div
-                  key={note.id}
-                  style={styles.notification}
-                >
-                  <p style={{ margin: "0 0 8px 0", color: "#1a1a1a", fontWeight: "500" }}>
+                <div key={note.id} style={styles.notification}>
+                  <p
+                    style={{ margin: "0 0 8px 0", color: "#1a1a1a", fontWeight: "500" }}
+                  >
                     {note.message}
                   </p>
                   <span style={{ color: "#6b6b6b", fontSize: "0.85rem" }}>
@@ -686,5 +790,4 @@ return (
     </div>
   </div>
 );
-
 }

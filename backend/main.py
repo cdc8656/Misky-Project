@@ -69,6 +69,7 @@ class Reservation(BaseModel):
     item_id: UUID     # Item being reserved
     timestamp: datetime
     status: Optional[str] = "active"  #valid statuses: "active", "cancelled", "completed"
+    quantity: int = 1
 
 class Notification(BaseModel):
     id: Optional[UUID] = None
@@ -265,49 +266,89 @@ def get_reservations(
 @app.post("/reservations")
 def create_reservation(
     reservation: Reservation,
-    authorization: str = Header(...) # JWT from frontend request
+    authorization: str = Header(...)
 ):
-    
-    jwt = authorization.replace("Bearer ", "").strip() #Formats JWT for use
+    jwt = authorization.replace("Bearer ", "").strip()
     headers = get_auth_headers(jwt)
 
-    # Convert UUIDs to strings for JSON serialization
-    payload = {
-        "customer_id": str(reservation.customer_id), # UUIDs must be stringified
-        "item_id": str(reservation.item_id),         # UUIDs must be stringified
-        "timestamp": reservation.timestamp.isoformat(),
-        "status": reservation.status or "active",
-    }
+    # Validate quantity
+    if reservation.quantity < 1:
+        raise HTTPException(status_code=400, detail="Quantity must be at least 1")
 
     try:
-        with httpx.Client() as client: #Supabase Request
-            # Create reservation row
-            response = client.post(
-                f"{SUPABASE_URL}/rest/v1/reservations", # Supabase reservations table
+        with httpx.Client() as client:
+            # ✅ Step 1: Fetch current item info to check availability
+            item_response = client.get(
+                f"{SUPABASE_URL}/rest/v1/items",
                 headers=headers,
-                json=payload,
+                params={
+                    "id": f"eq.{reservation.item_id}",
+                    "select": "total_spots,num_of_reservations"
+                }
             )
-            if response.status_code >= 400:
-                raise HTTPException(status_code=response.status_code, detail=response.text)
 
-            # Call RPC (a supabase function) to increment item reservation count
-            # this RPC increments `num_of_reservations` in the items table
+            if item_response.status_code >= 400:
+                raise HTTPException(
+                    status_code=item_response.status_code,
+                    detail=f"Failed to fetch item details: {item_response.text}"
+                )
+
+            items = item_response.json()
+            if not items:
+                raise HTTPException(status_code=404, detail="Item not found")
+
+            item = items[0]
+            total_spots = item.get("total_spots", 0)
+            num_reserved = item.get("num_of_reservations", 0)
+            available_spots = total_spots - num_reserved
+
+            if available_spots < reservation.quantity:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Only {available_spots} spot(s) available, but {reservation.quantity} requested."
+                )
+
+            # ✅ Step 2: Create reservation
+            payload = {
+                "customer_id": str(reservation.customer_id),
+                "item_id": str(reservation.item_id),
+                "timestamp": reservation.timestamp.isoformat(),
+                "status": reservation.status or "active",
+                "quantity": reservation.quantity
+            }
+
+            create_response = client.post(
+                f"{SUPABASE_URL}/rest/v1/reservations",
+                headers=headers,
+                json=payload
+            )
+
+            if create_response.status_code >= 400:
+                raise HTTPException(
+                    status_code=create_response.status_code,
+                    detail=f"Failed to create reservation: {create_response.text}"
+                )
+
+            # ✅ Step 3: Increment reservation count via RPC
             rpc_response = client.post(
                 f"{SUPABASE_URL}/rest/v1/rpc/increment_num_of_reservations",
                 headers=headers,
-                json={"item_uuid": str(reservation.item_id)},
+                json={
+                    "item_uuid": str(reservation.item_id),
+                    "increment_by": reservation.quantity
+                }
             )
+
             if rpc_response.status_code >= 400:
                 raise HTTPException(
                     status_code=rpc_response.status_code,
-                    detail="Reservacion creada pero hubo un error en actualizar el numero de ofertas",
+                    detail="Reservation created but failed to update item count"
                 )
 
-            return response.json()# Return reservation data to frontend
-    #Handle Errors
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+            return create_response.json()
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
 
 # Fetch items created by current restaurant
 @app.get("/restaurant/items")

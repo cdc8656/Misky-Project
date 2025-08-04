@@ -13,6 +13,7 @@ export default function AuthForm({ type = "login", onAuth, supabase }) {
   const [role, setRole] = useState("customer");
   const [location, setLocation] = useState("");
   const [contact, setContact] = useState("");
+  const [profileImage, setProfileImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -30,6 +31,7 @@ export default function AuthForm({ type = "login", onAuth, supabase }) {
     setRole("customer");
     setLocation("");
     setContact("");
+    setProfileImage(null);
   };
 
   const handleLogin = async (e) => {
@@ -56,7 +58,9 @@ export default function AuthForm({ type = "login", onAuth, supabase }) {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
+
     try {
+      // 1. Sign up the user
       const { data: signupData, error: signupError } = await supabase.auth.signUp({
         email,
         password,
@@ -69,28 +73,60 @@ export default function AuthForm({ type = "login", onAuth, supabase }) {
       }
 
       const user = signupData?.user;
-      if (user) {
-        const { error: profileError } = await supabase.from("profiles").insert([
-          {
-            user_id: user.id,
-            name,
-            role,
-            location,
-            contact,
-          },
-        ]);
+      if (!user) {
+        setErrorMsg("No se pudo registrar el usuario.");
+        setLoading(false);
+        return;
+      }
 
-        if (profileError) {
-          console.error("Profile insert error:", profileError.message);
-          setErrorMsg("Registro exitoso, pero falló al crear el perfil: " + profileError.message);
+      // 2. Upload profile image if provided
+      let profilePictureUrl = null;
+      if (profileImage) {
+        const fileExt = profileImage.name.split(".").pop();
+        const filePath = `item-images/${user.id}-profile.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("item-images")
+          .upload(filePath, profileImage, {
+            cacheControl: "3600",
+            upsert: true,
+          });
+
+        if (uploadError) {
+          console.error("Error uploading profile image:", uploadError.message);
+          setErrorMsg("Registro exitoso, pero falló la carga de la foto de perfil.");
           setLoading(false);
           return;
         }
 
-        setErrorMsg("¡Registro exitoso! Por favor revisa tu email para confirmar tu cuenta antes de iniciar sesión.");
+        const { data } = supabase.storage.from("item-images").getPublicUrl(filePath);
+        profilePictureUrl = data.publicUrl;
       }
+
+      // 3. Insert profile data including profile_picture URL
+      const { error: profileError } = await supabase.from("profiles").insert([
+        {
+          user_id: user.id,
+          name,
+          role,
+          location,
+          contact,
+          profile_picture: profilePictureUrl,
+        },
+      ]);
+
+      if (profileError) {
+        console.error("Profile insert error:", profileError.message);
+        setErrorMsg("Registro exitoso, pero falló al crear el perfil: " + profileError.message);
+        setLoading(false);
+        return;
+      }
+
+      setErrorMsg("¡Registro exitoso! Por favor revisa tu email para confirmar tu cuenta antes de iniciar sesión.");
+      resetForm();
     } catch (err) {
       setErrorMsg("Error inesperado durante el registro.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -104,7 +140,7 @@ export default function AuthForm({ type = "login", onAuth, supabase }) {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + "/reset-password", // optional redirect URL after reset
+        redirectTo: window.location.origin + "/reset-password",
       });
       if (error) {
         setErrorMsg(error.message);
@@ -119,33 +155,32 @@ export default function AuthForm({ type = "login", onAuth, supabase }) {
     }
   };
 
-//UI portion
+  // UI styles
+  const inputStyle = {
+    width: "100%",
+    padding: "8px",
+    marginTop: "4px",
+    marginBottom: "12px",
+    borderRadius: "4px",
+    border: "1px solid #ccc",
+    fontSize: "14px",
+  };
 
-const inputStyle = {
-  width: "100%",
-  padding: "8px",
-  marginTop: "4px",
-  marginBottom: "12px",
-  borderRadius: "4px",
-  border: "1px solid #ccc",
-  fontSize: "14px",
-};
+  const buttonStyle = {
+    backgroundColor: "#3B38A0",
+    color: "white",
+    border: "none",
+    padding: "10px 16px",
+    borderRadius: "5px",
+    cursor: "pointer",
+    width: "100%",
+  };
 
-const buttonStyle = {
-  backgroundColor: "#3B38A0",
-  color: "white",
-  border: "none",
-  padding: "10px 16px",
-  borderRadius: "5px",
-  cursor: "pointer",
-  width: "100%",
-};
-
-const labelStyle = {
-  display: "block",
-  color: "#1A2A80",
-  marginBottom: "6px",
-};
+  const labelStyle = {
+    display: "block",
+    color: "#1A2A80",
+    marginBottom: "6px",
+  };
 
   return (
     <div
@@ -291,6 +326,18 @@ const labelStyle = {
                   />
                 </label>
                 <br />
+                <label htmlFor="profileImage" style={labelStyle}>
+                  Foto de Perfil:
+                  <input
+                    id="profileImage"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setProfileImage(e.target.files[0])}
+                    disabled={loading}
+                    style={inputStyle}
+                  />
+                </label>
+                <br />
               </>
             )}
 
@@ -324,9 +371,11 @@ const labelStyle = {
           <p
             style={{
               marginTop: "1rem",
-              color: errorMsg.startsWith("¡Registro exitoso") || errorMsg.startsWith("¡Email de restablecimiento")
-                ? "green"
-                : "red",
+              color:
+                errorMsg.startsWith("¡Registro exitoso") ||
+                errorMsg.startsWith("¡Email de restablecimiento")
+                  ? "green"
+                  : "red",
               textAlign: "center",
             }}
           >
