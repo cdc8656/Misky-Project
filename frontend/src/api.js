@@ -4,6 +4,7 @@ export const API_BASE_URL = "https://misky-project.onrender.com"; //base URL of 
 //"http://localhost:8000"; //Local testing
 //"https://misky-project.onrender.com"; //base URL of FastAPI backend
 
+//get the access token
 export const getAccessToken = async (supabase) => { //supabase.auth.getSession() to fetch the current user's session, which includes the access token if logged in
   const {
     data: { session },

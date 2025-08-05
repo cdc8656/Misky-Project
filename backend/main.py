@@ -4,6 +4,7 @@ from pydantic import BaseModel # For validating request bodies
 from uuid import UUID
 from typing import Optional
 from datetime import datetime
+import requests
 import os
 import httpx # (SUPABASE) HTTP client to send requests to Supabase REST API
 from dotenv import load_dotenv # To load Supabase keys from .env file
@@ -801,4 +802,32 @@ def update_profile(payload: dict, authorization: str = Header(...)):
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+
+@app.post("/update-archive")
+def update_archived_items():  
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        with httpx.Client() as client:
+            res = client.post(
+                f"{SUPABASE_URL}/rest/v1/rpc/archive_items_and_cancel_reservations",
+                headers=headers,
+                json={}
+            )
+            res.raise_for_status()
+            return {"success": True, "message": "Archived items and reservations"}
+    
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
     
