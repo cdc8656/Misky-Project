@@ -486,7 +486,7 @@ def cancel_reservation(
                 "customer_id": user_id
             }
             notif_response = client.post(
-                f"{SUPABASE_URL}/rest/v1/notifications",
+                f"{SUPABASE_URL}/rest/v1/notifications_restaurant",
                 headers=headers,
                 json=notification_payload,
             )
@@ -549,7 +549,7 @@ def confirm_reservation(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-#get notifications for both restaurants and customers
+#get notifications
 @app.get("/notifications", response_model=list[Notification])
 def get_notifications(authorization: str = Header(...)):
     jwt_token = authorization.replace("Bearer ", "").strip()
@@ -572,14 +572,25 @@ def get_notifications(authorization: str = Header(...)):
 
             role = profile_data[0].get("role")
             if role not in ("restaurant", "customer"):
-                raise HTTPException(status_code=400, detail="Error en escojer tipo de usario!")
+                raise HTTPException(status_code=400, detail="Error en escoger tipo de usuario!")
 
-            # Role-specific filters
+            # Choose the correct notifications table based on role
+            notifications_table = (
+                "notifications_restaurant" if role == "restaurant" else "notifications_customer"
+            )
+
+            # Use correct foreign key filter column
             filter_key = "restaurant_id" if role == "restaurant" else "customer_id"
-            params = {filter_key: f"eq.{user_id}"}
+
+            # Fetch only unread notifications with ordering
+            params = {
+                filter_key: f"eq.{user_id}",
+                "read": "eq.false",             # <-- filter unread only
+                "order": "created_at.desc"
+            }
 
             notifs_res = client.get(
-                f"{SUPABASE_URL}/rest/v1/notifications?order=created_at.desc",
+                f"{SUPABASE_URL}/rest/v1/{notifications_table}",
                 headers=headers,
                 params=params,
             )
@@ -591,6 +602,8 @@ def get_notifications(authorization: str = Header(...)):
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
 
 
 # restaurant can cancel their own items
@@ -655,7 +668,7 @@ def cancel_item(
 
                 # Create notification for customer and check success
                 notif_res = client.post(
-                    f"{SUPABASE_URL}/rest/v1/notifications",
+                    f"{SUPABASE_URL}/rest/v1/notifications_customer",
                     headers=headers,
                     json={
                         "restaurant_id": restaurant_id,
@@ -738,7 +751,7 @@ def cancel_item(
 
                 # Create notification for customer and check success
                 notif_res = client.post(
-                    f"{SUPABASE_URL}/rest/v1/notifications",
+                    f"{SUPABASE_URL}/rest/v1/notifications_customer",
                     headers=headers,
                     json={
                         "restaurant_id": restaurant_id,
@@ -830,4 +843,62 @@ def update_archived_items():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-    
+# Mark a notification as read
+@app.patch("/notifications/{notification_id}/read")
+def mark_notification_as_read(notification_id: str, authorization: str = Header(...)):
+    jwt_token = authorization.replace("Bearer ", "").strip()
+    user_id = get_user_id_from_jwt(jwt_token)
+    headers = get_auth_headers(jwt_token)
+
+    try:
+        with httpx.Client() as client:
+            # Get the user role first
+            profile_res = client.get(
+                f"{SUPABASE_URL}/rest/v1/profiles",
+                headers=headers,
+                params={"user_id": f"eq.{user_id}"},
+            )
+            profile_res.raise_for_status()
+            profile_data = profile_res.json()
+            if not profile_data:
+                raise HTTPException(status_code=404, detail="Perfil no encontrado")
+
+            role = profile_data[0].get("role")
+            if role not in ("restaurant", "customer"):
+                raise HTTPException(status_code=400, detail="Tipo de usuario inválido")
+
+            # Choose the correct notifications table and user key
+            notifications_table = "notifications_restaurant" if role == "restaurant" else "notifications_customer"
+            user_key = "restaurant_id" if role == "restaurant" else "customer_id"
+
+            # Verify the notification belongs to this user
+            notif_res = client.get(
+                f"{SUPABASE_URL}/rest/v1/{notifications_table}",
+                headers=headers,
+                params={
+                    "id": f"eq.{notification_id}",
+                    user_key: f"eq.{user_id}",
+                    "select": "id"
+                },
+            )
+            notif_res.raise_for_status()
+            notif_data = notif_res.json()
+            if not notif_data:
+                raise HTTPException(status_code=404, detail="Notificación no encontrada o no te pertenece")
+
+            # Mark notification as read
+            update_res = client.patch(
+                f"{SUPABASE_URL}/rest/v1/{notifications_table}?id=eq.{notification_id}",
+                headers=headers,
+                json={"read": True},
+            )
+            update_res.raise_for_status()
+
+        return {"message": "Notificación marcada como leída"}
+
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+

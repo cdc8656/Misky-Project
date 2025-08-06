@@ -10,7 +10,8 @@ import {
   createReservation, 
   cancelReservation, 
   completeReservation,
-  fetchNotifications } from "../api"; //helper functions that make HTTP requests to FastAPI backend
+  fetchNotifications,
+  markNotificationAsRead } from "../api"; //helper functions that make HTTP requests to FastAPI backend
 
 export default function CustomerDashboard({ user }) { //main react component
   //state setup
@@ -212,6 +213,17 @@ const complete = async (reservation_id) => {
   }
 };
 
+
+// notif read handler
+  const handleMarkNotificationAsRead = async (notificationId) => {
+  try {
+    await markNotificationAsRead(supabase, notificationId);
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+  } catch (err) {
+    console.error("Error al marcar como leída:", err);
+    alert("Error al marcar la notificación como leída.");
+  }
+};
 
 
 
@@ -590,203 +602,229 @@ return (
       )}
 
       {/* Your Reservations */}
-      <h3
-        style={styles.sectionTitle}
-        onClick={() => setShowReservations(!showReservations)}
-      >
-        {showReservations ? "▼" : "▶"} 📋 Mis Reservas
-      </h3>
-      {showReservations && (
-        <>
-          {reservations.length === 0 ? (
-            <div
-              style={{
-                ...styles.card,
-                textAlign: "center",
-                justifyContent: "center",
-              }}
-            >
-              <p style={{ color: "#6b6b6b", margin: 0 }}>
-                Aún no tienes reservas.
-              </p>
-            </div>
-          ) : (
-            <div style={styles.grid}>
-              {reservations.map((r) => (
-                <div
-                  key={r.id}
-                  style={styles.card}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.15)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow =
-                      "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1)";
-                  }}
-                >
-                  <div style={styles.cardContent}>
-                    <div
-                      style={{ display: "flex", gap: "20px", alignItems: "center" }}
-                    >
-                      {r.item.image_url && (
-                        <img
-                          src={r.item.image_url}
-                          alt={r.item.information}
-                          style={{
-                            width: 120,
-                            height: 120,
-                            objectFit: "cover",
-                            borderRadius: 12,
-                            flexShrink: 0,
-                          }}
-                        />
-                      )}
-                      <div style={{ flex: 1, color: "#1a1a1a" }}>
-                        <h4 style={styles.cardTitle}>{r.item.information}</h4>
-                        <p style={styles.cardText}>
-                          <strong>Cantidad:</strong> {r.quantity}
-                        </p>
-                        <p style={styles.cardText}>
-                          <strong>Hora de recojo:</strong>{" "}
-                          {new Date(r.item.pickup_time).toLocaleString()}
-                        </p>
-                        <p style={styles.cardText}>
-                          <strong>Precio:</strong> <b>S/.</b> {r.item.price.toFixed(2)}
-                        </p>
-                        <p style={styles.cardText}>
-                          <strong>Ubicación:</strong> {r.item.location}
-                        </p>
-                        <p style={{ ...styles.cardText, marginBottom: "16px" }}>
-                          <strong>Estado:</strong>{" "}
-                          <span
+        <h3
+          style={styles.sectionTitle}
+          onClick={() => setShowReservations(!showReservations)}
+        >
+          {showReservations ? "▼" : "▶"} 📋 Mis Reservas
+        </h3>
+
+        {showReservations && (
+          <>
+            {reservations.length === 0 ? (
+              <div
+                style={{
+                  ...styles.card,
+                  textAlign: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <p style={{ color: "#6b6b6b", margin: 0 }}>Aún no tienes reservas.</p>
+              </div>
+            ) : (
+              <div style={styles.grid}>
+                {reservations.map((r) => (
+                  <div
+                    key={r.id}
+                    style={styles.card}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.15)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow =
+                        "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1)";
+                    }}
+                  >
+                    <div style={styles.cardContent}>
+                      <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
+                        {r.item.image_url && (
+                          <img
+                            src={r.item.image_url}
+                            alt={r.item.information}
                             style={{
-                              backgroundColor:
-                                r.status === "active" ? "#10B981" : "#6B7280",
-                              color: "white",
-                              padding: "4px 8px",
-                              borderRadius: "8px",
-                              fontSize: "0.85rem",
-                              fontWeight: "600",
+                              width: 120,
+                              height: 120,
+                              objectFit: "cover",
+                              borderRadius: 12,
+                              flexShrink: 0,
                             }}
-                          >
-                            {r.status === "active"
-                              ? "activa"
-                              : r.status === "completed"
-                              ? "completada"
-                              : "cancelada"}
-                          </span>
-                        </p>
-
-                        {r.status === "active" && (
-                          <div
-                            style={{ display: "flex", gap: "12px", marginTop: "16px" }}
-                          >
-                            <button
-                              disabled={loading}
-                              onClick={() => cancel(r.id)}
-                              style={{
-                                ...styles.buttonSecondary,
-                                opacity: loading ? 0.6 : 1,
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!loading) {
-                                  e.target.style.backgroundColor = "#B91C1C";
-                                  e.target.style.transform = "translateY(-1px)";
-                                  e.target.style.boxShadow =
-                                    "0 4px 12px rgba(220, 38, 38, 0.4)";
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = "#DC2626";
-                                e.target.style.transform = "translateY(0)";
-                                e.target.style.boxShadow =
-                                  "0 2px 8px rgba(220, 38, 38, 0.3)";
-                              }}
-                            >
-                              Cancelar
-                            </button>
-
-                            <button
-                              disabled={loading}
-                              onClick={() => complete(r.id)}
-                              style={{
-                                ...styles.button,
-                                opacity: loading ? 0.6 : 1,
-                                margin: 0,
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!loading) {
-                                  e.target.style.backgroundColor = "#5A56C4";
-                                  e.target.style.transform = "translateY(-1px)";
-                                  e.target.style.boxShadow =
-                                    "0 4px 12px rgba(59, 56, 160, 0.4)";
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = "#3B38A0";
-                                e.target.style.transform = "translateY(0)";
-                                e.target.style.boxShadow =
-                                  "0 2px 8px rgba(59, 56, 160, 0.3)";
-                              }}
-                            >
-                              Confirmar Recojo
-                            </button>
-                          </div>
+                          />
                         )}
+                        <div style={{ flex: 1, color: "#1a1a1a" }}>
+                          <h4 style={styles.cardTitle}>{r.item.information}</h4>
+                          <p style={styles.cardText}>
+                            <strong>Cantidad:</strong> {r.quantity}
+                          </p>
+                          <p style={styles.cardText}>
+                            <strong>Hora de recojo:</strong>{" "}
+                            {new Date(r.item.pickup_time).toLocaleString("es-PE", {
+                              timeZone: "America/Lima",
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })}
+                          </p>
+                          <p style={styles.cardText}>
+                            <strong>Precio:</strong> <b>S/.</b> {r.item.price.toFixed(2)}
+                          </p>
+                          <p style={styles.cardText}>
+                            <strong>Ubicación:</strong> {r.item.location}
+                          </p>
+                          <p style={{ ...styles.cardText, marginBottom: "16px" }}>
+                            <strong>Estado:</strong>{" "}
+                            <span
+                              style={{
+                                backgroundColor:
+                                  r.status === "active"
+                                    ? "#10B981"
+                                    : r.status === "completed"
+                                    ? "#4F46E5"
+                                    : r.status === "canceled"
+                                    ? "#DC2626"
+                                    : "#6B7280", // expired
+                                color: "white",
+                                padding: "4px 8px",
+                                borderRadius: "8px",
+                                fontSize: "0.85rem",
+                                fontWeight: "600",
+                              }}
+                            >
+                              {r.status === "active"
+                                ? "activa"
+                                : r.status === "completed"
+                                ? "completada"
+                                : r.status === "canceled"
+                                ? "cancelada"
+                                : "expirada"}
+                            </span>
+                          </p>
+
+                          {r.status === "active" && (
+                            <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+                              <button
+                                disabled={loading}
+                                onClick={() => cancel(r.id)}
+                                style={{
+                                  ...styles.buttonSecondary,
+                                  opacity: loading ? 0.6 : 1,
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!loading) {
+                                    e.target.style.backgroundColor = "#B91C1C";
+                                    e.target.style.transform = "translateY(-1px)";
+                                    e.target.style.boxShadow =
+                                      "0 4px 12px rgba(220, 38, 38, 0.4)";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.target.style.backgroundColor = "#DC2626";
+                                  e.target.style.transform = "translateY(0)";
+                                  e.target.style.boxShadow =
+                                    "0 2px 8px rgba(220, 38, 38, 0.3)";
+                                }}
+                              >
+                                Cancelar
+                              </button>
+
+                              <button
+                                disabled={loading}
+                                onClick={() => complete(r.id)}
+                                style={{
+                                  ...styles.button,
+                                  opacity: loading ? 0.6 : 1,
+                                  margin: 0,
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!loading) {
+                                    e.target.style.backgroundColor = "#5A56C4";
+                                    e.target.style.transform = "translateY(-1px)";
+                                    e.target.style.boxShadow =
+                                      "0 4px 12px rgba(59, 56, 160, 0.4)";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.target.style.backgroundColor = "#3B38A0";
+                                  e.target.style.transform = "translateY(0)";
+                                  e.target.style.boxShadow =
+                                    "0 2px 8px rgba(59, 56, 160, 0.3)";
+                                }}
+                              >
+                                Confirmar Recojo
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
 
       {/* Notifications */}
-      <h3
-        style={styles.sectionTitle}
-        onClick={() => setShowNotifications(!showNotifications)}
-      >
-        {showNotifications ? "▼" : "▶"} 🔔 Notificaciones
-      </h3>
-      {showNotifications && (
-        <>
-          {notifications.length === 0 ? (
-            <div
-              style={{
-                ...styles.card,
-                textAlign: "center",
-                justifyContent: "center",
-              }}
-            >
-              <p style={{ color: "#6b6b6b", margin: 0 }}>
-                No tienes notificaciones aún.
-              </p>
-            </div>
-          ) : (
-            <div
-              style={{ display: "grid", gap: "12px", marginBottom: "48px" }}
-            >
-              {notifications.map((note) => (
-                <div key={note.id} style={styles.notification}>
-                  <p
-                    style={{ margin: "0 0 8px 0", color: "#1a1a1a", fontWeight: "500" }}
-                  >
-                    {note.message}
-                  </p>
-                  <span style={{ color: "#6b6b6b", fontSize: "0.85rem" }}>
-                    {new Date(note.created_at).toLocaleString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+        <h3
+          style={styles.sectionTitle}
+          onClick={() => setShowNotifications(!showNotifications)}
+        >
+          {showNotifications ? "▼" : "▶"} 🔔 Notificaciones
+        </h3>
+
+          {showNotifications && (
+          <>
+            {notifications.filter(n => !n.read).length === 0 ? (
+              <div
+                style={{
+                  ...styles.card,
+                  textAlign: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <p style={{ color: "#6b6b6b", margin: 0 }}>
+                  No tienes notificaciones aún.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: "12px", marginBottom: "48px" }}>
+                {notifications.filter(n => !n.read).map((note) => (
+                  <div key={note.id} style={styles.notification}>
+                    <p
+                      style={{
+                        margin: "0 0 8px 0",
+                        color: "#1a1a1a",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {note.message}
+                    </p>
+                    <span style={{ color: "#6b6b6b", fontSize: "0.85rem" }}>
+                      {new Date(note.created_at).toLocaleString()}
+                    </span>
+                    <button
+                      onClick={() => handleMarkNotificationAsRead(note.id)}
+                      style={{
+                        marginTop: "8px",
+                        padding: "4px 8px",
+                        fontSize: "0.75rem",
+                        backgroundColor: "#e0e0e0",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Marcar como leído
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
     </div>
   </div>
 );

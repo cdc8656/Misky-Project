@@ -59,6 +59,32 @@ export const updateUserProfile = async (supabase, profileData) => {
 };
 
 
+// Mark a notification as read
+export const markNotificationAsRead = async (supabase, notificationId) => {
+  const token = await getAccessToken(supabase);
+  if (!token) throw new Error("No autenticado");
+
+  if (!API_BASE_URL) throw new Error("Backend URL is not defined");
+
+  try {
+    const res = await axios.patch(
+      `${API_BASE_URL}/notifications/${notificationId}/read`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error marking notification as read:", err);
+    throw new Error(err.response?.data?.detail || "Error al marcar notificación como leída");
+  }
+};
+
+
 
 //CUSTOMER FUNCTIONS
 // Fetch all available food items (for customers)
@@ -341,15 +367,17 @@ export const fetchNotifications = async (supabase) => {
   if (!token) throw new Error("No autenticado");
 
   try {
-    const res = await axios.get(`${API_BASE_URL}/notifications`, {
+    const response = await axios.get(`${API_BASE_URL}/notifications`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return res.data; // returns array of notifications
+    // The backend returns notifications filtered by role from the appropriate table
+    return response.data; // array of notifications for this user
   } catch (err) {
     console.error("Error fetching notifications:", err);
     throw new Error(err.response?.data?.detail || "Error encontrando notificación");
   }
 };
+
 
 // (Optional) Create a notification (mostly for admin/testing purposes)
 export const createNotification = async (supabase, notificationData) => {

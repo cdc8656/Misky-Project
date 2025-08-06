@@ -8,6 +8,7 @@ import {
   getProfilePicture,
   cancelRestaurantItem,
   completeRestaurantItem,
+  markNotificationAsRead 
 } from "../api.js";
 
 export default function RestaurantDashboard({ user }) {
@@ -186,6 +187,17 @@ export default function RestaurantDashboard({ user }) {
       setLoading(false);
     }
   };
+
+// notif read handler
+  const handleMarkNotificationAsRead = async (notificationId) => {
+  try {
+    await markNotificationAsRead(supabase, notificationId);
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+  } catch (err) {
+    console.error("Error al marcar como leída:", err);
+    alert("Error al marcar la notificación como leída.");
+  }
+};
 
   const styles = {
     container: {
@@ -422,52 +434,71 @@ export default function RestaurantDashboard({ user }) {
           </Link>
         </div>
 
-        {/* Notifications */}
-        <h3
-          style={styles.sectionTitle}
-          onClick={() => setShowNotifications(!showNotifications)}
-        >
-          {showNotifications ? "▼" : "▶"} 🔔 Notificaciones
-        </h3>
-        {showNotifications && (
-          <>
-            {notifications.length === 0 ? (
-              <div
-                style={{ ...styles.card, textAlign: "center", justifyContent: "center" }}
-              >
-                <p style={{ color: "#6b6b6b", margin: 0 }}>
-                  No tienes notificaciones aún.
-                </p>
-              </div>
-            ) : (
-              <div style={{ display: "grid", gap: "12px", marginBottom: "48px" }}>
-                {notifications.map((note) => (
-                  <div key={note.id} style={styles.notification}>
-                    <p
-                      style={{
-                        margin: "0 0 8px 0",
-                        color: "#1a1a1a",
-                        fontWeight: "500",
-                      }}
-                    >
-                      {note.message}
-                    </p>
-                    <span
-                      style={{ color: "#6b6b6b", fontSize: "0.85rem" }}
-                    >
-                      {/* Changed: Display notification date/time in Spanish (Peru) timezone */}
-                      {new Date(note.created_at).toLocaleString("es-PE", {
-                        timeZone: "America/Lima",
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
+        {/* Restaurant Notifications */}
+          <h3
+            style={styles.sectionTitle}
+            onClick={() => setShowNotifications(!showNotifications)}
+          >
+            {showNotifications ? "▼" : "▶"} 🔔 Notificaciones
+          </h3>
+
+          {showNotifications && (
+            <>
+              {notifications.length === 0 ? (
+                <div
+                  style={{
+                    ...styles.card,
+                    textAlign: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <p style={{ color: "#6b6b6b", margin: 0 }}>
+                    No tienes notificaciones aún.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gap: "12px", marginBottom: "48px" }}>
+                  {notifications.map((note) => (
+                    <div key={note.id} style={styles.notification}>
+                      <p
+                        style={{
+                          margin: "0 0 8px 0",
+                          color: "#1a1a1a",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {note.message}
+                      </p>
+                      <span
+                        style={{ color: "#6b6b6b", fontSize: "0.85rem" }}
+                      >
+                        {new Date(note.created_at).toLocaleString("es-PE", {
+                          timeZone: "America/Lima",
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </span>
+                      <button
+                        onClick={() => handleMarkNotificationAsRead(note.id)}
+                        style={{
+                          marginTop: "8px",
+                          padding: "4px 8px",
+                          fontSize: "0.75rem",
+                          backgroundColor: "#e0e0e0",
+                          border: "none",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Marcar como leída
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
 
         {/* Item Creation Form */}
         <h3 style={styles.sectionTitle}>✨ Crear Nueva Oferta</h3>
@@ -566,92 +597,102 @@ export default function RestaurantDashboard({ user }) {
         </form>
 
         {/* Active Offers List */}
-        <h3
-          style={styles.sectionTitle}
-          onClick={() => setShowOffers(!showOffers)}
-        >
-          {showOffers ? "▼" : "▶"} 🥡 Ofertas Activas
-        </h3>
-        {showOffers && (
-          <>
-            {loading && items.length === 0 ? (
-              <p style={{ color: "#6b6b6b" }}>Cargando ofertas...</p>
-            ) : items.length === 0 ? (
-              <p style={{ color: "#6b6b6b" }}>
-                No tienes ofertas activas. ¡Crea una arriba!
-              </p>
-            ) : (
-              <div style={styles.grid}>
-                {items.map((item) => (
-                  <div key={item.id} style={styles.card}>
-                    {item.image_url ? (
-                      <img
-                        src={item.image_url}
-                        alt="Item"
-                        style={styles.cardImage}
-                      />
-                    ) : (
-                      <div style={styles.cardImagePlaceholder}>Sin Imagen</div>
-                    )}
-                    <div style={styles.cardContent}>
-                      <h4 style={styles.cardTitle}>{item.information}</h4>
-                      {/* Changed: Display pickup time in Spanish (Peru) timezone */}
-                      <p style={styles.cardText}>
-                        <strong>Recojo:</strong>{" "}
-                        {new Date(item.pickup_time).toLocaleString("es-PE", {
-                          timeZone: "America/Lima",
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })}
-                      </p>
-                      <p style={styles.cardText}>
-                        <strong>Porciones disponibles:</strong>{" "}
-                        {item.total_spots}
-                      </p>
-                      <p style={styles.cardText}>
-                        <strong>Precio:</strong> S/. {item.price.toFixed(2)}
-                      </p>
-                      <div style={{ marginTop: "12px" }}>
-                        {item.status === "active" ? (
-                          <>
-                            <button
-                              onClick={() => handleCancel(item.id)}
-                              style={styles.buttonSecondary}
-                              disabled={loading}
+          <h3
+            style={styles.sectionTitle}
+            onClick={() => setShowOffers(!showOffers)}
+          >
+            {showOffers ? "▼" : "▶"} 🥡 Ofertas Activas
+          </h3>
+
+          {showOffers && (
+            <>
+              {loading && items.length === 0 ? (
+                <p style={{ color: "#6b6b6b" }}>Cargando ofertas...</p>
+              ) : items.length === 0 ? (
+                <p style={{ color: "#6b6b6b" }}>
+                  No tienes ofertas activas. ¡Crea una arriba!
+                </p>
+              ) : (
+                <div style={styles.grid}>
+                  {items.map((item) => (
+                    <div key={item.id} style={styles.card}>
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt="Item"
+                          style={styles.cardImage}
+                        />
+                      ) : (
+                        <div style={styles.cardImagePlaceholder}>Sin Imagen</div>
+                      )}
+
+                      <div style={styles.cardContent}>
+                        <h4 style={styles.cardTitle}>{item.information}</h4>
+
+                        {/* Pickup time in Spanish (Peru) timezone */}
+                        <p style={styles.cardText}>
+                          <strong>Recojo:</strong>{" "}
+                          {new Date(item.pickup_time).toLocaleString("es-PE", {
+                            timeZone: "America/Lima",
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          })}
+                        </p>
+
+                        <p style={styles.cardText}>
+                          <strong>Porciones disponibles:</strong> {item.total_spots}
+                        </p>
+
+                        <p style={styles.cardText}>
+                          <strong>Precio:</strong> S/. {item.price.toFixed(2)}
+                        </p>
+
+                        <div style={{ marginTop: "12px" }}>
+                          {item.status === "active" ? (
+                            <>
+                              <button
+                                onClick={() => handleCancel(item.id)}
+                                style={styles.buttonSecondary}
+                                disabled={loading}
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                onClick={() => handleComplete(item.id)}
+                                style={styles.button}
+                                disabled={loading}
+                              >
+                                Completar
+                              </button>
+                            </>
+                          ) : (
+                            <p
+                              style={{
+                                color:
+                                  item.status === "completed"
+                                    ? "#22c55e" // green
+                                    : item.status === "canceled"
+                                    ? "#dc2626" // red
+                                    : "#a8a29e", // gray for expired
+                                fontWeight: "600",
+                              }}
                             >
-                              Cancelar
-                            </button>
-                            <button
-                              onClick={() => handleComplete(item.id)}
-                              style={styles.button}
-                              disabled={loading}
-                            >
-                              Completar
-                            </button>
-                          </>
-                        ) : (
-                          <p
-                            style={{
-                              color:
-                                item.status === "completed"
-                                  ? "#22c55e"
-                                  : "#dc2626",
-                              fontWeight: "600",
-                            }}
-                          >
-                            {item.status === "completed"
-                              ? "Oferta completada"
-                              : "Oferta cancelada"}
-                          </p>
-                        )}
+                              {item.status === "completed"
+                                ? "Oferta completada"
+                                : item.status === "canceled"
+                                ? "Oferta cancelada"
+                                : "Oferta expirada"}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
       </div>
     </div>
   );
