@@ -32,7 +32,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000", # local dev
         "https://misky-project.onrender.com", # deployed backend (optional)
-        "https://misky-project-1cj4.vercel.app"],  # deployed React frontend on Vercel
+        "https://misky-caraz.vercel.app"],  # deployed React frontend on Vercel
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
