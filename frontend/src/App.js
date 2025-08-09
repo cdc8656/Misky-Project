@@ -115,7 +115,7 @@ export default function App() {
                 <CustomerDashboard user={user} profile={profile} supabase={supabase} />
               )
             ) : user ? (
-              <p style={{ textAlign: "center", marginTop: "2rem" }}>Loading profile...</p>
+              <p style={{ textAlign: "center", marginTop: "2rem" }}>Cargando perfil...</p>
             ) : (
               <Navigate to="/" />
             )

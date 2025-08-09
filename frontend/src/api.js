@@ -353,7 +353,7 @@ export const getProfilePicture = async (supabase) => {
   } catch (err) {
     console.error("Error fetching profile picture:", err);
     throw new Error(
-      err.response?.data?.detail || "Failed to fetch profile picture"
+      err.response?.data?.detail || "Error en encontrar foto de perfil"
     );
   }
 };
@@ -438,7 +438,7 @@ export const updateProfilePictureUrl = async (supabase, imageUrl) => {
   } catch (err) {
     console.error("Error updating profile picture URL:", err);
     throw new Error(
-      err.response?.data?.detail || "Failed to update profile picture"
+      err.response?.data?.detail || "Error en actualizar foto de perfil"
     );
   }
 };
