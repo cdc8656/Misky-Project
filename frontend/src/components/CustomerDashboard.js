@@ -600,7 +600,7 @@ return (
           )}
         </>
       )}
-
+// Shows existing reservations
       {/* Your Reservations */}
         <h3
           style={styles.sectionTitle}
